@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # Optional PostgreSQL with pgvector for production deployments
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: infrarecon_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: infra_recon
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend Intelligence Layer
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: infrarecon_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgrespassword@db:5432/infra_recon
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=gemini-2.5-flash
+      - EMBEDDING_MODEL_NAME=all-MiniLM-L6-v2
+      - APP_ENV=production
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://localhost:80
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend/data:/app/data
+
+  # React Frontend Enterprise UI
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: infrarecon_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
