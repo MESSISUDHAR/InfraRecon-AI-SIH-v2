@@ -7,6 +7,30 @@ const api = axios.create({
   },
 });
 
+// Attach Authorization Bearer token to all outgoing API calls
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('infra_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Also set up global axios default interceptor for direct multipart uploads
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('infra_token');
+    if (token && !config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Schedule APIs
 export const uploadSchedule = async (formData) => {
   const response = await axios.post('/api/schedule/upload', formData, {

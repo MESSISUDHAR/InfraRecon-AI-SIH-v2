@@ -35,7 +35,8 @@ def init_db():
         match_candidate,
         execution_state,
         dependency,
-        audit_log
+        audit_log,
+        user
     )
     Base.metadata.create_all(bind=engine)
 

@@ -5,6 +5,7 @@ from app.models.match_candidate import MatchCandidate
 from app.models.execution_state import ExecutionState
 from app.models.dependency import Dependency
 from app.models.audit_log import AuditLog
+from app.models.user import User
 
 __all__ = [
     "Project",
@@ -13,5 +14,6 @@ __all__ = [
     "MatchCandidate",
     "ExecutionState",
     "Dependency",
-    "AuditLog"
+    "AuditLog",
+    "User"
 ]

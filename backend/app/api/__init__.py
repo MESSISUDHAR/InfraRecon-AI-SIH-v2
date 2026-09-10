@@ -1,4 +1,5 @@
 from app.api.health import router as health_router
+from app.api.auth import router as auth_router
 from app.api.projects import router as projects_router
 from app.api.schedule import router as schedule_router
 from app.api.execution import router as execution_router
@@ -14,6 +15,7 @@ from app.api.modules import (
 
 __all__ = [
     "health_router",
+    "auth_router",
     "projects_router",
     "schedule_router",
     "execution_router",

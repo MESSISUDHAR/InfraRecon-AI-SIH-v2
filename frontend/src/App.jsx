@@ -10,10 +10,22 @@ import PlannerReviewPage from './pages/PlannerReviewPage';
 import ExecutionStatePage from './pages/ExecutionStatePage';
 import AuditPage from './pages/AuditPage';
 import EvaluationPage from './pages/EvaluationPage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 import WeightConfigModal from './components/Common/WeightConfigModal';
 import { getProjects } from './services/api';
+import authService from './services/auth';
+import { Layers } from 'lucide-react';
 
 export default function App() {
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState(() => authService.isAuthenticated());
+  const [currentUser, setCurrentUser] = useState(() => authService.getUser());
+  const [authView, setAuthView] = useState('login'); // 'login' | 'signup'
+  const [isVerifyingSession, setIsVerifyingSession] = useState(true);
+  const [prefilledEmail, setPrefilledEmail] = useState('');
+
+  // Application State
   const [activeTab, setActiveTab] = useState('dashboard');
   const [systemStatus, setSystemStatus] = useState({ database_connected: false });
   const [isConfigOpen, setIsConfigOpen] = useState(false);
@@ -50,6 +62,30 @@ export default function App() {
     data_date: "2026-09-06T00:00:00Z"
   });
 
+  // Verify Session Token on Initial Load
+  useEffect(() => {
+    const verifyToken = async () => {
+      if (authService.isAuthenticated()) {
+        try {
+          const user = await authService.getMe();
+          setCurrentUser(user);
+          setIsAuthenticated(true);
+        } catch (err) {
+          console.warn('Session verification failed, logging out:', err);
+          authService.logout();
+          setIsAuthenticated(false);
+          setCurrentUser(null);
+        }
+      } else {
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+      }
+      setIsVerifyingSession(false);
+    };
+
+    verifyToken();
+  }, []);
+
   const fetchProjects = async () => {
     try {
       const prjs = await getProjects();
@@ -78,10 +114,31 @@ export default function App() {
     };
 
     checkHealth();
-    fetchProjects();
+    if (isAuthenticated) {
+      fetchProjects();
+    }
     const interval = setInterval(checkHealth, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isAuthenticated]);
+
+  const handleLoginSuccess = (authData) => {
+    setCurrentUser(authData.user);
+    setIsAuthenticated(true);
+    setActiveTab('dashboard');
+    fetchProjects();
+  };
+
+  const handleSignupSuccess = (createdEmail) => {
+    setPrefilledEmail(createdEmail || '');
+    setAuthView('login');
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    setAuthView('login');
+  };
 
   const handleLoadDemo = () => {
     setDemoNotice("Sample test scenarios loaded: Refinery Package 4 (120 L5 activities, 5 realistic DPR cases)");
@@ -92,6 +149,47 @@ export default function App() {
     setActiveProject(proj);
   };
 
+  // Loading Screen while verifying JWT session on refresh
+  if (isVerifyingSession) {
+    return (
+      <div className="h-screen w-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-[#EAEAEA]">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#D4AF37] to-[#F4D06F] p-0.5 flex items-center justify-center shadow-xl shadow-[#D4AF37]/20 mb-4 animate-pulse">
+          <div className="w-full h-full bg-[#0A0A0A] rounded-[14px] flex items-center justify-center">
+            <Layers className="w-6 h-6 text-[#D4AF37]" />
+          </div>
+        </div>
+        <div className="text-sm font-bold tracking-tight text-[#EAEAEA] flex items-center gap-2">
+          <span>InfraRecon <span className="text-[#D4AF37]">AI</span></span>
+        </div>
+        <p className="text-xs text-[#A3A3A3] mt-2">Authenticating workspace session...</p>
+      </div>
+    );
+  }
+
+  // Unauthenticated Flow: Render Login or Signup Page
+  if (!isAuthenticated) {
+    if (authView === 'signup') {
+      return (
+        <SignupPage
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onSignupSuccess={handleSignupSuccess}
+          onSwitchToLogin={() => setAuthView('login')}
+        />
+      );
+    }
+    return (
+      <LoginPage
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onLoginSuccess={handleLoginSuccess}
+        onSwitchToSignup={() => setAuthView('signup')}
+        initialEmail={prefilledEmail}
+      />
+    );
+  }
+
+  // Authenticated Application Flow
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -127,6 +225,8 @@ export default function App() {
         onSelectProject={handleProjectSelect}
         onOpenConfig={() => setIsConfigOpen(true)}
         onLoadDemo={handleLoadDemo}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       />
 
       {/* Main Workspace Layout */}

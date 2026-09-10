@@ -6,6 +6,7 @@ from app.config import settings
 from app.database import init_db
 from app.api import (
     health_router,
+    auth_router,
     projects_router,
     schedule_router,
     execution_router,
@@ -44,6 +45,7 @@ app.add_middleware(
 app.include_router(health_router)
 
 # API v1 Namespaced Endpoints
+app.include_router(auth_router, prefix="/api")
 app.include_router(projects_router, prefix="/api")
 app.include_router(schedule_router, prefix="/api")
 app.include_router(execution_router, prefix="/api")

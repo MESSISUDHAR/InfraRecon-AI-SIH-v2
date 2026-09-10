@@ -10,7 +10,9 @@ import {
   Clock,
   Sun,
   Moon,
-  Shield
+  Shield,
+  LogOut,
+  User as UserIcon
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -21,8 +23,20 @@ export default function Navbar({
   projectsList = [],
   onSelectProject,
   onOpenConfig, 
-  onLoadDemo 
+  onLoadDemo,
+  currentUser = null,
+  onLogout
 }) {
+  // Helper to get initials
+  const getInitials = (name) => {
+    if (!name) return 'IR';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
+
   return (
     <header className="h-16 border-b border-[#2A2A2A] bg-[#111111] backdrop-blur-md px-6 flex items-center justify-between z-30 sticky top-0">
       {/* Brand & Project Context */}
@@ -76,15 +90,15 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* Right Controls: Data Date, Health, Actions */}
-      <div className="flex items-center gap-4">
-        <div className="hidden sm:flex items-center gap-2 text-xs text-[#A3A3A3] bg-[#1A1A1A] border border-[#2A2A2A] px-3 py-1.5 rounded-lg">
+      {/* Right Controls: Data Date, Health, Actions, User Profile & Logout */}
+      <div className="flex items-center gap-3">
+        <div className="hidden xl:flex items-center gap-2 text-xs text-[#A3A3A3] bg-[#1A1A1A] border border-[#2A2A2A] px-3 py-1.5 rounded-lg">
           <Clock className="w-3.5 h-3.5 text-[#D4AF37]" />
           <span>Data Date: <strong className="text-[#EAEAEA] font-medium">06-Sep-2026</strong></span>
         </div>
 
         {/* Backend Health Pill */}
-        <div className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border bg-[#0A0A0A] border-[#2A2A2A]">
+        <div className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border bg-[#0A0A0A] border-[#2A2A2A]">
           {systemStatus?.database_connected ? (
             <>
               <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
@@ -103,19 +117,19 @@ export default function Navbar({
           {/* Theme Toggle Button */}
           <button
             onClick={onToggleTheme}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 border-[#2A2A2A] bg-[#1A1A1A] hover:bg-[#222222] hover:border-[#D4AF37]/50 text-[#EAEAEA] shadow-sm"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 border-[#2A2A2A] bg-[#1A1A1A] hover:bg-[#222222] hover:border-[#D4AF37]/50 text-[#EAEAEA] shadow-sm"
             title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
             id="theme-toggle-button"
           >
             {theme === 'dark' ? (
               <>
                 <Sun className="w-3.5 h-3.5 text-[#F4D06F]" />
-                <span>Light</span>
+                <span className="hidden md:inline">Light</span>
               </>
             ) : (
               <>
                 <Moon className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>Dark</span>
+                <span className="hidden md:inline">Dark</span>
               </>
             )}
           </button>
@@ -126,7 +140,7 @@ export default function Navbar({
             title="Load realistic demo test scenarios"
           >
             <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span className="hidden md:inline">Demo Scenarios</span>
+            <span className="hidden lg:inline">Demo Scenarios</span>
           </button>
 
           <button 
@@ -135,8 +149,40 @@ export default function Navbar({
             title="Configure Reconciliation Weights & Confidence Thresholds"
           >
             <Sliders className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span className="hidden md:inline">Weights & Rules</span>
+            <span className="hidden lg:inline">Weights & Rules</span>
           </button>
+
+          {/* User Account / Session Controls */}
+          {currentUser && (
+            <div className="flex items-center gap-2 pl-2 border-l border-[#2A2A2A]">
+              <div 
+                className="flex items-center gap-2 bg-[#1A1A1A] border border-[#2A2A2A] hover:border-[#D4AF37]/40 rounded-lg px-2.5 py-1 transition-all"
+                title={`Logged in as ${currentUser.email}`}
+              >
+                <div className="w-6 h-6 rounded-md bg-gradient-to-tr from-[#D4AF37] to-[#F4D06F] text-[#0A0A0A] font-bold text-[10px] flex items-center justify-center shrink-0">
+                  {getInitials(currentUser.full_name)}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <div className="text-xs font-semibold text-[#EAEAEA] leading-tight truncate max-w-[110px]">
+                    {currentUser.full_name}
+                  </div>
+                  <div className="text-[10px] text-[#A3A3A3] leading-none truncate max-w-[110px]">
+                    {currentUser.role || "Engineer"}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                id="navbar-logout-button"
+                onClick={onLogout}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-[#EF4444]/30 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] transition-all"
+                title="Log out of application"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Logout</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

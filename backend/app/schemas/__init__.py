@@ -79,11 +79,24 @@ from app.schemas.dependency_schema import (
     ProjectDependencyImpactSummary
 )
 
+from app.schemas.auth_schema import (
+    SignupRequest,
+    LoginRequest,
+    UserResponse,
+    AuthResponse,
+    MessageResponse
+)
+
 __all__ = [
     "HealthResponse",
     "ApiResponse",
     "ProjectCreate",
     "ProjectResponse",
+    "SignupRequest",
+    "LoginRequest",
+    "UserResponse",
+    "AuthResponse",
+    "MessageResponse",
     "ExecutionEventCreate",
     "ExtractedExecutionData",
     "ExecutionEventResponse",
