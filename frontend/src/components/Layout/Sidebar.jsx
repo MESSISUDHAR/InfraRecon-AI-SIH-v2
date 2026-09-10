@@ -9,7 +9,8 @@ import {
   ShieldCheck,
   Gauge,
   HelpCircle,
-  ChevronRight
+  ChevronRight,
+  Cpu
 } from 'lucide-react';
 
 export const NAV_ITEMS = [
@@ -19,17 +20,16 @@ export const NAV_ITEMS = [
   { id: 'reconciliation', label: 'Reconciliation', icon: GitMerge, desc: 'Context-Aware Match Engine' },
   { id: 'planner-review', label: 'Planner Review', icon: UserCheck, desc: 'Human-in-the-Loop Validation', badge: '3' },
   { id: 'execution-state', label: 'Execution State', icon: CheckSquare, desc: 'Verified Cumulative Progress' },
-  { id: 'audit', label: 'Evidence & Audit', icon: ShieldCheck, desc: 'Explainable Decision Trail' },
   { id: 'evaluation', label: 'Evaluation Benchmarks', icon: Gauge, desc: 'Precision & Recall Suite' },
 ];
 
 export default function Sidebar({ activeTab, onSelectTab, pendingReviewCount = 3 }) {
   return (
-    <aside className="w-64 border-r border-slate-800/80 bg-slate-900/60 flex flex-col justify-between shrink-0 h-[calc(100vh-4rem)]">
+    <aside className="w-64 border-r border-[#2A2A2A] bg-[#111111] flex flex-col justify-between shrink-0 h-[calc(100vh-4rem)]">
       {/* Navigation Tabs */}
-      <div className="p-3 space-y-1 overflow-y-auto">
-        <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-          Core Workflows
+      <div className="p-3 space-y-1.5 overflow-y-auto">
+        <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-[#A3A3A3] flex items-center justify-between">
+          <span>Core Workflows</span>
         </div>
         
         {NAV_ITEMS.map((item) => {
@@ -41,15 +41,15 @@ export default function Sidebar({ activeTab, onSelectTab, pendingReviewCount = 3
             <button
               key={item.id}
               onClick={() => onSelectTab(item.id)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-all group ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all group ${
                 isActive
-                  ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30'
-                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+                  ? 'bg-gradient-to-r from-[#D4AF37] to-[#F4D06F] text-[#0A0A0A] shadow-md shadow-[#D4AF37]/25'
+                  : 'text-[#A3A3A3] hover:bg-[#1A1A1A] hover:text-[#EAEAEA]'
               }`}
             >
               <div className="flex items-center gap-3">
                 <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${
-                  isActive ? 'text-white' : 'text-slate-400 group-hover:text-brand-400'
+                  isActive ? 'text-[#0A0A0A]' : 'text-[#A3A3A3] group-hover:text-[#D4AF37]'
                 }`} />
                 <span className="tracking-tight">{item.label}</span>
               </div>
@@ -57,8 +57,8 @@ export default function Sidebar({ activeTab, onSelectTab, pendingReviewCount = 3
               {isReview && pendingReviewCount > 0 && (
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                   isActive 
-                    ? 'bg-white/20 text-white' 
-                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse'
+                    ? 'bg-[#0A0A0A]/20 text-[#0A0A0A]' 
+                    : 'bg-[#D4AF37]/15 text-[#F4D06F] border border-[#D4AF37]/40'
                 }`}>
                   {pendingReviewCount}
                 </span>
@@ -69,12 +69,15 @@ export default function Sidebar({ activeTab, onSelectTab, pendingReviewCount = 3
       </div>
 
       {/* System Footer Info */}
-      <div className="p-4 border-t border-slate-800/80 bg-slate-950/40">
-        <div className="flex items-center justify-between text-xs text-slate-400">
-          <span>Engine Status</span>
-          <span className="font-mono text-[11px] text-emerald-400">Deterministic + AI</span>
+      <div className="p-4 border-t border-[#2A2A2A] bg-[#0A0A0A]">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-[#A3A3A3] font-medium">Engine Status</span>
+          <span className="font-mono text-[11px] text-[#10B981] flex items-center gap-1.5 font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+            Deterministic + AI
+          </span>
         </div>
-        <div className="mt-2 text-[11px] text-slate-500 leading-tight">
+        <div className="mt-2 text-[11px] text-[#A3A3A3] leading-relaxed border-l-2 border-[#D4AF37]/40 pl-2">
           Rule: AI extracts events; context engine matches schedule; planner verifies state.
         </div>
       </div>

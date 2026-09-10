@@ -25,7 +25,8 @@ import {
   GitCommit,
   Flame,
   ArrowUpRight,
-  Sliders
+  Sliders,
+  Cpu
 } from 'lucide-react';
 import { getAuditLogs, getAuditLogDetail, getAuditStats, getProjects } from '../services/api';
 
@@ -121,25 +122,45 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
   const getActionBadge = (action) => {
     switch (action) {
       case 'AUTO_MATCH':
-        return <span className="badge-high flex items-center gap-1"><Sparkles className="w-3 h-3" /> AUTO_MATCH</span>;
+        return (
+          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 flex items-center gap-1">
+            <Sparkles className="w-3 h-3" /> AUTO_MATCH
+          </span>
+        );
       case 'PLANNER_APPROVAL':
-        return <span className="badge-medium flex items-center gap-1"><CheckCircle className="w-3 h-3" /> PLANNER_APPROVAL</span>;
+        return (
+          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 flex items-center gap-1">
+            <CheckCircle className="w-3 h-3" /> PLANNER_APPROVAL
+          </span>
+        );
       case 'PLANNER_OVERRIDE':
-        return <span className="badge-low flex items-center gap-1 text-amber-300 bg-amber-500/10 border-amber-500/20"><Sliders className="w-3 h-3" /> PLANNER_OVERRIDE</span>;
+        return (
+          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30 flex items-center gap-1">
+            <Sliders className="w-3 h-3" /> PLANNER_OVERRIDE
+          </span>
+        );
       case 'REJECTION':
-        return <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold border flex items-center gap-1 bg-rose-500/10 text-rose-400 border-rose-500/20"><XCircle className="w-3 h-3" /> REJECTION</span>;
+        return (
+          <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/30 flex items-center gap-1">
+            <XCircle className="w-3 h-3" /> REJECTION
+          </span>
+        );
       default:
-        return <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold border bg-slate-800 text-slate-300 border-slate-700">{action}</span>;
+        return (
+          <span className="text-xs px-2.5 py-0.5 rounded-full font-medium bg-[#111111] text-[#A3A3A3] border border-[#2A2A2A]">
+            {action}
+          </span>
+        );
     }
   };
 
   const getBorderColor = (action) => {
     switch (action) {
-      case 'AUTO_MATCH': return 'border-l-emerald-500';
-      case 'PLANNER_APPROVAL': return 'border-l-brand-500';
-      case 'PLANNER_OVERRIDE': return 'border-l-amber-500';
-      case 'REJECTION': return 'border-l-rose-500';
-      default: return 'border-l-slate-700';
+      case 'AUTO_MATCH': return 'border-l-[#10B981]';
+      case 'PLANNER_APPROVAL': return 'border-l-[#D4AF37]';
+      case 'PLANNER_OVERRIDE': return 'border-l-[#F59E0B]';
+      case 'REJECTION': return 'border-l-[#EF4444]';
+      default: return 'border-l-[#2A2A2A]';
     }
   };
 
@@ -166,54 +187,63 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
-            <ShieldCheck className="w-7 h-7 text-brand-400" />
-            <span>Evidence & Audit Trail</span>
-            <span className="text-xs font-semibold px-2.5 py-0.5 bg-brand-500/10 text-brand-400 border border-brand-500/20 rounded-full font-mono">
-              Milestone 10 • 7-Stage Lineage
-            </span>
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Complete, immutable lineage tracing every reconciliation decision: <strong className="text-slate-300">Field Evidence → AI Extraction → Candidates → Reconciliation → Confidence → Human Decision → Verified State</strong>.
-          </p>
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-[#111111] border border-[#D4AF37]/30 rounded-xl shadow-[0_0_15px_rgba(212,175,55,0.15)]">
+              <ShieldCheck className="w-6 h-6 text-[#D4AF37]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-black text-[#EAEAEA] tracking-tight">
+                  Evidence & Audit Trail
+                </h1>
+                <span className="text-[10px] font-bold px-2 py-0.5 bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 rounded-full font-mono">
+                  7-STAGE LINEAGE
+                </span>
+              </div>
+              <p className="text-xs text-[#A3A3A3] mt-0.5">
+                Complete, immutable lineage tracing every reconciliation decision from raw field report to verified execution state.
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={fetchAuditData}
             disabled={loading}
-            className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 rounded-lg transition-all flex items-center gap-2 shadow-sm"
+            className="px-3.5 py-2 bg-[#111111] hover:bg-[#1A1A1A] border border-[#2A2A2A] hover:border-[#D4AF37]/40 text-xs font-bold text-[#EAEAEA] rounded-xl transition-all flex items-center gap-2 shadow-sm"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-slate-400 ${loading ? 'animate-spin text-brand-400' : ''}`} />
-            Refresh Audit Logs
+            <RefreshCw className={`w-3.5 h-3.5 text-[#D4AF37] ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh Audit Logs</span>
           </button>
         </div>
       </div>
 
       {/* Security & Integrity Banner */}
-      <div className="bg-slate-950/80 border border-brand-500/20 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 backdrop-blur-sm">
+      <div className="bg-[#111111] border border-[#D4AF37]/30 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden shadow-lg">
+        <div className="absolute top-0 left-0 w-1 h-full bg-[#D4AF37]" />
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400">
+          <div className="p-2 bg-[#10B981]/10 border border-[#10B981]/20 rounded-xl text-[#10B981]">
             <Lock className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-200 flex items-center gap-2">
+            <div className="text-xs font-bold text-[#EAEAEA] flex items-center gap-2">
               <span>Zero-Leak Security & Explainability Standard</span>
-              <span className="text-[10px] px-2 py-0.2 bg-emerald-500/20 text-emerald-300 rounded font-mono">COMPLIANT</span>
+              <span className="text-[10px] px-2 py-0.2 bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 rounded font-mono font-bold">COMPLIANT</span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-[#A3A3A3] mt-0.5">
               API credentials, private key tokens, and internal headers are strictly omitted from audit payloads while retaining full prompt and model lineage.
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-800 text-xs">
-          <Clock className="w-3.5 h-3.5 text-brand-400" />
-          <span className="text-slate-400 font-mono">Project:</span>
+        <div className="flex items-center gap-2 bg-[#0A0A0A] px-3 py-1.5 rounded-xl border border-[#2A2A2A] text-xs">
+          <Clock className="w-3.5 h-3.5 text-[#D4AF37]" />
+          <span className="text-[#A3A3A3] font-mono">Project:</span>
           {projectsList.length > 0 ? (
             <select
               value={projectId}
               onChange={(e) => setProjectId(e.target.value)}
-              className="bg-slate-950 border border-slate-700 rounded px-2 py-0.5 text-white font-mono font-bold text-xs focus:outline-none focus:border-brand-500"
+              className="bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-2 py-0.5 text-[#EAEAEA] font-mono font-bold text-xs focus:outline-none focus:border-[#D4AF37]"
             >
               {projectsList.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -222,7 +252,7 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
               ))}
             </select>
           ) : (
-            <strong className="text-white font-mono">{projectId}</strong>
+            <strong className="text-[#D4AF37] font-mono">{projectId}</strong>
           )}
         </div>
       </div>
@@ -231,41 +261,41 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
       {stats && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="panel-card p-4 space-y-1">
-            <div className="text-xs text-slate-400 font-medium">Total Audit Entries</div>
-            <div className="text-2xl font-bold text-white tracking-tight">{stats.total_audit_records}</div>
-            <div className="text-[10px] text-slate-500 flex items-center gap-1">
-              <Database className="w-3 h-3 text-slate-400" /> Immutable ledger entries
+            <div className="text-xs text-[#A3A3A3] font-bold uppercase tracking-wider">Total Audit Entries</div>
+            <div className="text-2xl font-black text-[#EAEAEA] tracking-tight font-mono">{stats.total_audit_records}</div>
+            <div className="text-[10px] text-[#A3A3A3] flex items-center gap-1">
+              <Database className="w-3 h-3 text-[#D4AF37]" /> Immutable ledger entries
             </div>
           </div>
 
-          <div className="panel-card p-4 space-y-1 border-t-2 border-t-emerald-500">
-            <div className="text-xs text-slate-400 font-medium">Auto-Processed Matches</div>
-            <div className="text-2xl font-bold text-emerald-400 tracking-tight">{stats.auto_matches_count}</div>
-            <div className="text-[10px] text-emerald-500/80 flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> High confidence policy ($\ge$85%)
+          <div className="panel-card p-4 space-y-1 border-t-2 border-t-[#10B981]">
+            <div className="text-xs text-[#A3A3A3] font-bold uppercase tracking-wider">Auto-Processed</div>
+            <div className="text-2xl font-black text-[#10B981] tracking-tight font-mono">{stats.auto_matches_count}</div>
+            <div className="text-[10px] text-[#10B981] flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> High confidence policy (≥85%)
             </div>
           </div>
 
-          <div className="panel-card p-4 space-y-1 border-t-2 border-t-brand-500">
-            <div className="text-xs text-slate-400 font-medium">Planner Approvals</div>
-            <div className="text-2xl font-bold text-brand-400 tracking-tight">{stats.planner_approvals_count}</div>
-            <div className="text-[10px] text-brand-400/80 flex items-center gap-1">
+          <div className="panel-card p-4 space-y-1 border-t-2 border-t-[#D4AF37]">
+            <div className="text-xs text-[#A3A3A3] font-bold uppercase tracking-wider">Planner Approvals</div>
+            <div className="text-2xl font-black text-[#D4AF37] tracking-tight font-mono">{stats.planner_approvals_count}</div>
+            <div className="text-[10px] text-[#D4AF37] flex items-center gap-1">
               <CheckCircle className="w-3 h-3" /> Human validated matches
             </div>
           </div>
 
-          <div className="panel-card p-4 space-y-1 border-t-2 border-t-amber-500">
-            <div className="text-xs text-slate-400 font-medium">Planner Overrides</div>
-            <div className="text-2xl font-bold text-amber-400 tracking-tight">{stats.planner_overrides_count}</div>
-            <div className="text-[10px] text-amber-400/80 flex items-center gap-1">
+          <div className="panel-card p-4 space-y-1 border-t-2 border-t-[#F59E0B]">
+            <div className="text-xs text-[#A3A3A3] font-bold uppercase tracking-wider">Planner Overrides</div>
+            <div className="text-2xl font-black text-[#F59E0B] tracking-tight font-mono">{stats.planner_overrides_count}</div>
+            <div className="text-[10px] text-[#F59E0B] flex items-center gap-1">
               <Sliders className="w-3 h-3" /> Alternative candidate chosen
             </div>
           </div>
 
-          <div className="panel-card p-4 space-y-1 border-t-2 border-t-rose-500">
-            <div className="text-xs text-slate-400 font-medium">Rejections / Unmatched</div>
-            <div className="text-2xl font-bold text-rose-400 tracking-tight">{stats.rejections_count}</div>
-            <div className="text-[10px] text-rose-400/80 flex items-center gap-1">
+          <div className="panel-card p-4 space-y-1 border-t-2 border-t-[#EF4444]">
+            <div className="text-xs text-[#A3A3A3] font-bold uppercase tracking-wider">Rejections</div>
+            <div className="text-2xl font-black text-[#EF4444] tracking-tight font-mono">{stats.rejections_count}</div>
+            <div className="text-[10px] text-[#EF4444] flex items-center gap-1">
               <XCircle className="w-3 h-3" /> State preserved untouched
             </div>
           </div>
@@ -275,25 +305,25 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
       {/* Filter & Search Toolbar */}
       <div className="panel-card p-4 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="relative w-full md:w-96">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#A3A3A3] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search by Activity ID, Name, Source ID, Reviewer..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
+            className="w-full pl-9 pr-4 py-2 bg-[#0A0A0A] border border-[#2A2A2A] rounded-xl text-xs text-[#EAEAEA] placeholder-[#555555] focus:outline-none focus:border-[#D4AF37] transition-colors font-mono"
           />
         </div>
 
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
+          <div className="flex items-center gap-2 text-xs text-[#A3A3A3]">
+            <Filter className="w-3.5 h-3.5 text-[#D4AF37]" />
             <span>Decision Action:</span>
           </div>
           <select
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value)}
-            className="bg-slate-950/80 border border-slate-800 rounded-lg text-xs text-slate-200 px-3 py-2 focus:outline-none focus:border-brand-500 font-medium"
+            className="bg-[#0A0A0A] border border-[#2A2A2A] rounded-xl text-xs text-[#EAEAEA] px-3 py-2 focus:outline-none focus:border-[#D4AF37] font-medium"
           >
             <option value="ALL">All Decision Types</option>
             <option value="AUTO_MATCH">AUTO_MATCH (High Confidence)</option>
@@ -307,16 +337,16 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
 
       {/* Main Audit Log Stream */}
       {loading ? (
-        <div className="p-12 text-center text-slate-400 space-y-3">
-          <RefreshCw className="w-8 h-8 animate-spin text-brand-400 mx-auto" />
-          <div className="text-sm font-semibold text-slate-200">Loading Immutable Audit Stream...</div>
-          <div className="text-xs text-slate-500">Retrieving full 7-stage lineage records from backend</div>
+        <div className="p-12 text-center text-[#A3A3A3] space-y-3">
+          <RefreshCw className="w-8 h-8 animate-spin text-[#D4AF37] mx-auto" />
+          <div className="text-sm font-bold text-[#EAEAEA]">Loading Immutable Audit Stream...</div>
+          <div className="text-xs text-[#A3A3A3]">Retrieving full 7-stage lineage records from backend</div>
         </div>
       ) : filteredLogs.length === 0 ? (
-        <div className="panel-card p-12 text-center text-slate-400 space-y-2">
-          <Database className="w-10 h-10 text-slate-600 mx-auto" />
-          <div className="text-sm font-semibold text-slate-300">No Audit Records Found</div>
-          <p className="text-xs text-slate-500 max-w-md mx-auto">
+        <div className="panel-card p-12 text-center text-[#A3A3A3] space-y-2">
+          <Database className="w-10 h-10 text-[#555555] mx-auto" />
+          <div className="text-sm font-bold text-[#EAEAEA]">No Audit Records Found</div>
+          <p className="text-xs text-[#A3A3A3] max-w-md mx-auto">
             No audit records match the current filter criteria. Reconcile or review field events to populate the audit ledger.
           </p>
         </div>
@@ -325,36 +355,36 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
           {filteredLogs.map((log) => (
             <div 
               key={log.id} 
-              className={`panel-card p-5 space-y-3 border-l-4 ${getBorderColor(log.action_type)} transition-all hover:border-slate-700 bg-slate-900/60`}
+              className={`panel-card p-5 space-y-3 border-l-4 ${getBorderColor(log.action_type)} transition-all hover:border-[#D4AF37]/50`}
             >
               {/* Row Header */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-[#2A2A2A] pb-3">
                 <div className="flex flex-wrap items-center gap-2.5">
                   {getActionBadge(log.action_type)}
                   {log.activity_id && (
-                    <span className="text-xs font-mono text-brand-400 font-bold bg-brand-500/10 px-2 py-0.5 rounded border border-brand-500/20">
+                    <span className="text-xs font-mono text-[#D4AF37] font-bold bg-[#D4AF37]/10 px-2.5 py-0.5 rounded-md border border-[#D4AF37]/20">
                       {log.activity_id}
                     </span>
                   )}
                   {log.activity_name && (
-                    <span className="text-xs text-slate-200 font-medium">
+                    <span className="text-xs text-[#EAEAEA] font-bold">
                       {log.activity_name}
                     </span>
                   )}
-                  <span className="text-xs text-slate-600">•</span>
-                  <span className="text-xs text-slate-400 font-mono">
-                    Event: <strong className="text-slate-300">{log.event_id}</strong>
+                  <span className="text-xs text-[#555555]">•</span>
+                  <span className="text-xs text-[#A3A3A3] font-mono">
+                    Event: <strong className="text-[#EAEAEA]">{log.event_id}</strong>
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="text-xs text-slate-400 font-mono flex items-center gap-1.5">
-                    <Clock className="w-3 h-3 text-slate-500" />
+                  <div className="text-xs text-[#A3A3A3] font-mono flex items-center gap-1.5">
+                    <Clock className="w-3 h-3 text-[#D4AF37]" />
                     {formatTimestamp(log.timestamp)}
                   </div>
                   <button
                     onClick={() => handleInspectLineage(log.id)}
-                    className="px-3 py-1 bg-brand-500/10 hover:bg-brand-500/20 text-brand-300 border border-brand-500/30 rounded-md text-xs font-semibold flex items-center gap-1 transition-all shadow-sm"
+                    className="px-3 py-1 bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
                   >
                     <span>Inspect Lineage</span>
                     <ArrowRight className="w-3 h-3" />
@@ -365,71 +395,71 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
               {/* Row Body - Key Metrics Grid */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
                 {/* Source & Evidence */}
-                <div className="bg-slate-950/70 p-3 rounded-lg border border-slate-800/80 space-y-1">
-                  <div className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1">
-                    <FileText className="w-3 h-3 text-brand-400" /> Source Evidence
+                <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
+                  <div className="text-[10px] text-[#A3A3A3] uppercase font-bold flex items-center gap-1">
+                    <FileText className="w-3 h-3 text-[#D4AF37]" /> Source Evidence
                   </div>
-                  <div className="text-slate-300 font-mono text-[11px] truncate">
+                  <div className="text-[#EAEAEA] font-mono text-[11px] truncate font-medium">
                     {log.source_id ? `${log.source_id} (${log.source_type || 'Field'})` : 'Field Report'}
                   </div>
-                  <p className="text-slate-400 italic text-[11px] line-clamp-1">
+                  <p className="text-[#A3A3A3] italic text-[11px] line-clamp-1 font-sans">
                     "{log.raw_evidence_snippet || 'No raw snippet'}"
                   </p>
                 </div>
 
                 {/* AI Model & Extraction */}
-                <div className="bg-slate-950/70 p-3 rounded-lg border border-slate-800/80 space-y-1">
-                  <div className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1">
-                    <Cpu className="w-3 h-3 text-cyan-400" /> Extraction Engine
+                <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
+                  <div className="text-[10px] text-[#A3A3A3] uppercase font-bold flex items-center gap-1">
+                    <Cpu className="w-3 h-3 text-[#3B82F6]" /> Extraction Engine
                   </div>
-                  <div className="text-slate-200 font-mono text-[11px] flex items-center gap-1.5">
-                    <span className="font-semibold text-cyan-300">{log.model_version || 'Gemini 2.5 Flash'}</span>
-                    <span className="text-[10px] text-slate-400">({log.prompt_version || 'v1.0'})</span>
+                  <div className="text-[#EAEAEA] font-mono text-[11px] flex items-center gap-1.5">
+                    <span className="font-bold text-[#3B82F6]">{log.model_version || 'Gemini 2.5 Flash'}</span>
+                    <span className="text-[10px] text-[#A3A3A3]">({log.prompt_version || 'v1.0'})</span>
                   </div>
-                  <p className="text-slate-400 text-[11px] truncate">
-                    Embedding: <span className="font-mono text-slate-300">all-MiniLM-L6-v2</span>
+                  <p className="text-[#A3A3A3] text-[11px] truncate">
+                    Embedding: <span className="font-mono text-[#EAEAEA]">all-MiniLM-L6-v2</span>
                   </p>
                 </div>
 
                 {/* Confidence & Decision */}
-                <div className="bg-slate-950/70 p-3 rounded-lg border border-slate-800/80 space-y-1">
-                  <div className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1">
-                    <Layers className="w-3 h-3 text-emerald-400" /> Confidence & Reviewer
+                <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
+                  <div className="text-[10px] text-[#A3A3A3] uppercase font-bold flex items-center gap-1">
+                    <Layers className="w-3 h-3 text-[#10B981]" /> Confidence & Reviewer
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-[11px] text-emerald-400">
+                    <span className="font-mono font-bold text-[11px] text-[#10B981]">
                       {log.confidence !== null ? `${(log.confidence * 100).toFixed(1)}%` : 'N/A'}
                     </span>
-                    <span className="text-[10px] text-slate-500 font-mono">
-                      By: <strong className="text-slate-300">{log.performed_by || 'SYSTEM'}</strong>
+                    <span className="text-[10px] text-[#A3A3A3] font-mono">
+                      By: <strong className="text-[#EAEAEA]">{log.performed_by || 'SYSTEM'}</strong>
                     </span>
                   </div>
-                  <p className="text-slate-400 text-[11px] truncate">
-                    Action: <span className="font-mono text-slate-300">{log.action_type}</span>
+                  <p className="text-[#A3A3A3] text-[11px] truncate">
+                    Action: <span className="font-mono text-[#EAEAEA]">{log.action_type}</span>
                   </p>
                 </div>
 
                 {/* State Transition */}
-                <div className="bg-slate-950/70 p-3 rounded-lg border border-slate-800/80 space-y-1">
-                  <div className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3 text-purple-400" /> State Transition
+                <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
+                  <div className="text-[10px] text-[#A3A3A3] uppercase font-bold flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-[#A855F7]" /> State Transition
                   </div>
-                  <div className="text-slate-200 font-mono text-[11px]">
-                    Progress: <span className="text-slate-400">{log.previous_state?.actual_progress !== undefined ? `${log.previous_state.actual_progress}%` : '0%'}</span>
-                    {' '}&rarr;{' '}
-                    <span className="text-emerald-400 font-bold">{log.new_state?.actual_progress !== undefined ? `${log.new_state.actual_progress}%` : 'Updated'}</span>
+                  <div className="text-[#EAEAEA] font-mono text-[11px]">
+                    Progress: <span className="text-[#A3A3A3]">{log.previous_state?.actual_progress !== undefined ? `${log.previous_state.actual_progress}%` : '0%'}</span>
+                    {' '}→{' '}
+                    <span className="text-[#10B981] font-bold">{log.new_state?.actual_progress !== undefined ? `${log.new_state.actual_progress}%` : 'Updated'}</span>
                   </div>
-                  <p className="text-slate-400 text-[11px] truncate">
-                    Status: <span className="font-medium text-slate-300">{log.new_state?.status || 'VERIFIED'}</span>
+                  <p className="text-[#A3A3A3] text-[11px] truncate">
+                    Status: <span className="font-medium text-[#EAEAEA]">{log.new_state?.status || 'VERIFIED'}</span>
                   </p>
                 </div>
               </div>
 
               {/* Rationale Footer */}
-              <div className="text-xs text-slate-400 bg-slate-950/50 p-2.5 rounded-lg border border-slate-800/60 flex items-start gap-2">
-                <Info className="w-3.5 h-3.5 text-brand-400 shrink-0 mt-0.5" />
+              <div className="text-xs text-[#A3A3A3] bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] flex items-start gap-2.5">
+                <Info className="w-3.5 h-3.5 text-[#D4AF37] shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-slate-300 font-medium">Reconciliation Rationale: </strong>
+                  <strong className="text-[#D4AF37] font-semibold">Reconciliation Rationale: </strong>
                   <span>{log.decision_reason || 'Reconciliation match recorded.'}</span>
                 </div>
               </div>
@@ -440,22 +470,22 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
 
       {/* 7-STAGE DEEP AUDIT LINEAGE INSPECTION MODAL */}
       {selectedAuditId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#111111] border border-[#2A2A2A] rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden">
             {/* Modal Header */}
-            <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+            <div className="p-5 border-b border-[#2A2A2A] flex items-center justify-between bg-[#111111]">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-brand-500/10 border border-brand-500/20 rounded-lg text-brand-400">
+                <div className="p-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-xl text-[#D4AF37]">
                   <ShieldCheck className="w-6 h-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-bold text-white tracking-tight">
+                    <h2 className="text-lg font-bold text-[#EAEAEA] tracking-tight">
                       End-to-End Decision Lineage Inspector
                     </h2>
                     {lineageDetail && getActionBadge(lineageDetail.action_type)}
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5 font-mono">
+                  <p className="text-xs text-[#A3A3A3] mt-0.5 font-mono">
                     Audit Log ID: {selectedAuditId} • Project: {lineageDetail?.project_id || 'PRJ-REF-04'}
                   </p>
                 </div>
@@ -466,7 +496,7 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
                   setSelectedAuditId(null);
                   setLineageDetail(null);
                 }}
-                className="p-2 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors"
+                className="p-2 hover:bg-[#1A1A1A] text-[#A3A3A3] hover:text-[#EAEAEA] rounded-xl transition-colors border border-transparent hover:border-[#2A2A2A]"
               >
                 <XCircle className="w-6 h-6" />
               </button>
@@ -474,16 +504,16 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
 
             {/* Modal Content */}
             {detailLoading || !lineageDetail ? (
-              <div className="p-16 text-center text-slate-400 space-y-3">
-                <RefreshCw className="w-8 h-8 animate-spin text-brand-400 mx-auto" />
-                <div className="text-sm font-semibold text-slate-200">Assembling 7-Stage Lineage Graph...</div>
-                <div className="text-xs text-slate-500">Querying field evidence, Gemini extractions, embeddings, signals, and state deltas</div>
+              <div className="p-16 text-center text-[#A3A3A3] space-y-3">
+                <RefreshCw className="w-8 h-8 animate-spin text-[#D4AF37] mx-auto" />
+                <div className="text-sm font-bold text-[#EAEAEA]">Assembling 7-Stage Lineage Graph...</div>
+                <div className="text-xs text-[#A3A3A3]">Querying field evidence, Gemini extractions, embeddings, signals, and state deltas</div>
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 {/* 7-Stage Progress Stepper Bar */}
-                <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
-                  <div className="grid grid-cols-7 gap-1 text-center">
+                <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A]">
+                  <div className="grid grid-cols-7 gap-1.5 text-center">
                     {[
                       { num: 1, label: '1. Field Evidence', icon: FileText },
                       { num: 2, label: '2. AI Extraction', icon: Cpu },
@@ -499,14 +529,14 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
                         <button
                           key={step.num}
                           onClick={() => setActiveStageTab(step.num)}
-                          className={`p-2 rounded-lg text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
+                          className={`p-2.5 rounded-xl text-xs font-bold flex flex-col items-center gap-1 transition-all ${
                             isActive 
-                              ? 'bg-brand-500/20 text-brand-300 border border-brand-500/40 shadow-sm' 
-                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent'
+                              ? 'bg-[#D4AF37] text-[#0A0A0A] shadow-[0_0_12px_rgba(212,175,55,0.3)]' 
+                              : 'text-[#A3A3A3] hover:text-[#EAEAEA] hover:bg-[#111111] border border-transparent'
                           }`}
                         >
-                          <StepIcon className={`w-4 h-4 ${isActive ? 'text-brand-400' : 'text-slate-500'}`} />
-                          <span className="text-[11px] truncate w-full">{step.label}</span>
+                          <StepIcon className="w-4 h-4 shrink-0" />
+                          <span className="text-[10px] truncate w-full">{step.label}</span>
                         </button>
                       );
                     })}
@@ -517,35 +547,35 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
                 {activeStageTab === 1 && (
                   <div className="space-y-4 animate-in fade-in duration-150">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-brand-400" />
+                      <h3 className="text-sm font-bold text-[#EAEAEA] flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-[#D4AF37]" />
                         Stage 1: Raw Field Evidence Ingestion
                       </h3>
-                      <span className="text-xs text-slate-400 font-mono">Source ID: {lineageDetail.stage_1_field_evidence.source_id || 'N/A'}</span>
+                      <span className="text-xs text-[#A3A3A3] font-mono">Source ID: {lineageDetail.stage_1_field_evidence.source_id || 'N/A'}</span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                      <div className="panel-card p-3 space-y-1">
-                        <div className="text-slate-500 text-[11px]">Source Type</div>
-                        <div className="text-slate-200 font-semibold">{lineageDetail.stage_1_field_evidence.source_type || 'DPR'}</div>
+                      <div className="panel-card p-3.5 space-y-1">
+                        <div className="text-[#A3A3A3] text-[10px] uppercase font-bold">Source Type</div>
+                        <div className="text-[#EAEAEA] font-semibold">{lineageDetail.stage_1_field_evidence.source_type || 'DPR'}</div>
                       </div>
-                      <div className="panel-card p-3 space-y-1">
-                        <div className="text-slate-500 text-[11px]">Report Date</div>
-                        <div className="text-slate-200 font-mono">{lineageDetail.stage_1_field_evidence.report_date || 'N/A'}</div>
+                      <div className="panel-card p-3.5 space-y-1">
+                        <div className="text-[#A3A3A3] text-[10px] uppercase font-bold">Report Date</div>
+                        <div className="text-[#EAEAEA] font-mono">{lineageDetail.stage_1_field_evidence.report_date || 'N/A'}</div>
                       </div>
-                      <div className="panel-card p-3 space-y-1">
-                        <div className="text-slate-500 text-[11px]">Reporter / Field Supervisor</div>
-                        <div className="text-slate-200 font-semibold">{lineageDetail.stage_1_field_evidence.reporter_name || 'Field Lead'}</div>
+                      <div className="panel-card p-3.5 space-y-1">
+                        <div className="text-[#A3A3A3] text-[10px] uppercase font-bold">Reporter / Field Supervisor</div>
+                        <div className="text-[#EAEAEA] font-semibold">{lineageDetail.stage_1_field_evidence.reporter_name || 'Field Lead'}</div>
                       </div>
                     </div>
 
                     <div className="panel-card p-4 space-y-2">
-                      <div className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                        <FileText className="w-3.5 h-3.5 text-brand-400" />
+                      <div className="text-xs font-bold text-[#EAEAEA] flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-[#D4AF37]" />
                         Verbatim Field Report Text
                       </div>
-                      <div className="p-3.5 bg-slate-950 rounded-lg border border-slate-800 text-xs text-slate-200 font-mono whitespace-pre-wrap leading-relaxed">
-                        {lineageDetail.stage_1_field_evidence.raw_text || 'No raw text recorded.'}
+                      <div className="p-3.5 bg-[#0A0A0A] rounded-xl border border-[#2A2A2A] text-xs text-[#EAEAEA] font-sans italic whitespace-pre-wrap leading-relaxed">
+                        "{lineageDetail.stage_1_field_evidence.raw_text || 'No raw text recorded.'}"
                       </div>
                     </div>
                   </div>
@@ -555,73 +585,73 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
                 {activeStageTab === 2 && (
                   <div className="space-y-4 animate-in fade-in duration-150">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                        <Cpu className="w-4 h-4 text-cyan-400" />
+                      <h3 className="text-sm font-bold text-[#EAEAEA] flex items-center gap-2">
+                        <Cpu className="w-4 h-4 text-[#3B82F6]" />
                         Stage 2: Deterministic AI Fact Extraction
                       </h3>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs px-2.5 py-0.5 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded font-mono">
+                        <span className="text-xs px-2.5 py-0.5 bg-[#3B82F6]/15 text-[#3B82F6] border border-[#3B82F6]/30 rounded font-mono font-bold">
                           {lineageDetail.stage_2_ai_extraction.model_version}
                         </span>
-                        <span className="text-xs px-2 py-0.5 bg-slate-800 text-slate-300 rounded font-mono">
+                        <span className="text-xs px-2 py-0.5 bg-[#0A0A0A] text-[#A3A3A3] border border-[#2A2A2A] rounded font-mono">
                           {lineageDetail.stage_2_ai_extraction.prompt_version}
                         </span>
                       </div>
                     </div>
 
                     {lineageDetail.stage_2_ai_extraction.grounding_direct_quote && (
-                      <div className="p-3 bg-cyan-950/30 border border-cyan-500/20 rounded-lg text-xs space-y-1">
-                        <div className="text-[10px] text-cyan-400 uppercase font-bold">Grounding Verbatim Quote</div>
-                        <p className="text-cyan-200 italic font-mono">
+                      <div className="p-3 bg-[#3B82F6]/10 border border-[#3B82F6]/20 rounded-xl text-xs space-y-1">
+                        <div className="text-[10px] text-[#3B82F6] uppercase font-bold">Grounding Verbatim Quote</div>
+                        <p className="text-[#3B82F6] italic font-mono">
                           "{lineageDetail.stage_2_ai_extraction.grounding_direct_quote}"
                         </p>
                       </div>
                     )}
 
                     <div className="panel-card p-4 space-y-3">
-                      <div className="text-xs font-bold text-slate-300">Extracted Structural Entities</div>
+                      <div className="text-xs font-bold text-[#EAEAEA]">Extracted Structural Entities</div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                        <div className="bg-slate-950 p-2.5 rounded border border-slate-800 space-y-0.5">
-                          <div className="text-[10px] text-slate-500">Activity Description</div>
-                          <div className="text-slate-200 font-medium truncate">{lineageDetail.stage_2_ai_extraction.extracted_entities?.activity_description || 'N/A'}</div>
+                        <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-0.5">
+                          <div className="text-[10px] text-[#A3A3A3] uppercase font-bold">Activity Description</div>
+                          <div className="text-[#EAEAEA] font-medium truncate">{lineageDetail.stage_2_ai_extraction.extracted_entities?.activity_description || 'N/A'}</div>
                         </div>
-                        <div className="bg-slate-950 p-2.5 rounded border border-slate-800 space-y-0.5">
-                          <div className="text-[10px] text-slate-500">Discipline</div>
-                          <div className="text-slate-200 font-semibold">{lineageDetail.stage_2_ai_extraction.extracted_entities?.discipline || 'N/A'}</div>
+                        <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-0.5">
+                          <div className="text-[10px] text-[#A3A3A3] uppercase font-bold">Discipline</div>
+                          <div className="text-[#EAEAEA] font-semibold">{lineageDetail.stage_2_ai_extraction.extracted_entities?.discipline || 'N/A'}</div>
                         </div>
-                        <div className="bg-slate-950 p-2.5 rounded border border-slate-800 space-y-0.5">
-                          <div className="text-[10px] text-slate-500">Location</div>
-                          <div className="text-slate-200 font-medium">{lineageDetail.stage_2_ai_extraction.extracted_entities?.location || 'N/A'}</div>
+                        <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-0.5">
+                          <div className="text-[10px] text-[#A3A3A3] uppercase font-bold">Location</div>
+                          <div className="text-[#EAEAEA] font-medium">{lineageDetail.stage_2_ai_extraction.extracted_entities?.location || 'N/A'}</div>
                         </div>
-                        <div className="bg-slate-950 p-2.5 rounded border border-slate-800 space-y-0.5">
-                          <div className="text-[10px] text-slate-500">Asset / Line ID</div>
-                          <div className="text-slate-200 font-mono text-brand-300">
+                        <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-0.5">
+                          <div className="text-[10px] text-[#A3A3A3] uppercase font-bold">Asset / Line ID</div>
+                          <div className="text-[#D4AF37] font-mono font-bold">
                             {lineageDetail.stage_2_ai_extraction.extracted_entities?.asset_id || lineageDetail.stage_2_ai_extraction.extracted_entities?.line_id || 'N/A'}
                           </div>
                         </div>
-                        <div className="bg-slate-950 p-2.5 rounded border border-slate-800 space-y-0.5">
-                          <div className="text-[10px] text-slate-500">Event Type</div>
-                          <div className="text-slate-200 font-semibold">{lineageDetail.stage_2_ai_extraction.extracted_entities?.event_type || 'progress'}</div>
+                        <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-0.5">
+                          <div className="text-[10px] text-[#A3A3A3] uppercase font-bold">Event Type</div>
+                          <div className="text-[#EAEAEA] font-semibold">{lineageDetail.stage_2_ai_extraction.extracted_entities?.event_type || 'progress'}</div>
                         </div>
-                        <div className="bg-slate-950 p-2.5 rounded border border-slate-800 space-y-0.5">
-                          <div className="text-[10px] text-slate-500">Reported Progress</div>
-                          <div className="text-emerald-400 font-bold font-mono">
+                        <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-0.5">
+                          <div className="text-[10px] text-[#A3A3A3] uppercase font-bold">Reported Progress</div>
+                          <div className="text-[#10B981] font-bold font-mono">
                             {lineageDetail.stage_2_ai_extraction.extracted_entities?.progress !== undefined && lineageDetail.stage_2_ai_extraction.extracted_entities?.progress !== null
                               ? `${lineageDetail.stage_2_ai_extraction.extracted_entities.progress}%`
                               : 'N/A'}
                           </div>
                         </div>
-                        <div className="bg-slate-950 p-2.5 rounded border border-slate-800 space-y-0.5">
-                          <div className="text-[10px] text-slate-500">Extraction Confidence</div>
-                          <div className="text-brand-300 font-mono font-semibold">
+                        <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-0.5">
+                          <div className="text-[10px] text-[#A3A3A3] uppercase font-bold">Extraction Confidence</div>
+                          <div className="text-[#D4AF37] font-mono font-bold">
                             {lineageDetail.stage_2_ai_extraction.extraction_confidence
                               ? `${(lineageDetail.stage_2_ai_extraction.extraction_confidence * 100).toFixed(1)}%`
                               : 'High'}
                           </div>
                         </div>
-                        <div className="bg-slate-950 p-2.5 rounded border border-slate-800 space-y-0.5">
-                          <div className="text-[10px] text-slate-500">Temporal Validity</div>
-                          <div className="text-slate-300 font-mono text-[11px]">Validated</div>
+                        <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-0.5">
+                          <div className="text-[10px] text-[#A3A3A3] uppercase font-bold">Temporal Validity</div>
+                          <div className="text-[#10B981] font-mono text-[11px] font-bold">Validated</div>
                         </div>
                       </div>
                     </div>
@@ -632,41 +662,41 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
                 {activeStageTab === 3 && (
                   <div className="space-y-4 animate-in fade-in duration-150">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                        <Database className="w-4 h-4 text-purple-400" />
+                      <h3 className="text-sm font-bold text-[#EAEAEA] flex items-center gap-2">
+                        <Database className="w-4 h-4 text-[#A855F7]" />
                         Stage 3: Vector Similarity Candidate Generation
                       </h3>
-                      <div className="text-xs text-purple-300 bg-purple-500/10 px-2.5 py-0.5 rounded border border-purple-500/20 font-mono">
+                      <div className="text-xs text-[#A855F7] bg-[#A855F7]/15 px-2.5 py-0.5 rounded border border-[#A855F7]/30 font-mono font-bold">
                         Model: {lineageDetail.stage_3_candidate_retrieval.embedding_model} (384-dim)
                       </div>
                     </div>
 
                     <div className="panel-card overflow-hidden">
-                      <div className="p-3 bg-slate-950 border-b border-slate-800 text-xs font-semibold text-slate-300">
+                      <div className="p-3.5 bg-[#0A0A0A] border-b border-[#2A2A2A] text-xs font-bold text-[#EAEAEA]">
                         Retrieved Candidate Pool ({lineageDetail.stage_3_candidate_retrieval.retrieved_candidates.length} candidates)
                       </div>
-                      <div className="divide-y divide-slate-800 text-xs">
+                      <div className="divide-y divide-[#2A2A2A] text-xs">
                         {lineageDetail.stage_3_candidate_retrieval.retrieved_candidates.map((cand, idx) => (
-                          <div key={idx} className="p-3 flex items-center justify-between hover:bg-slate-800/40 transition-colors">
+                          <div key={idx} className="p-3.5 flex items-center justify-between hover:bg-[#1A1A1A] transition-colors">
                             <div className="space-y-0.5">
                               <div className="flex items-center gap-2">
-                                <span className="font-mono text-brand-400 font-bold">{cand.activity_id}</span>
-                                <span className="text-slate-200 font-medium">{cand.activity_name}</span>
+                                <span className="font-mono text-[#D4AF37] font-bold">{cand.activity_id}</span>
+                                <span className="text-[#EAEAEA] font-medium">{cand.activity_name}</span>
                                 {cand.discipline && (
-                                  <span className="text-[10px] px-1.5 py-0.2 bg-slate-800 text-slate-400 rounded">
+                                  <span className="text-[10px] px-1.5 py-0.2 bg-[#0A0A0A] text-[#A3A3A3] border border-[#2A2A2A] rounded">
                                     {cand.discipline}
                                   </span>
                                 )}
                               </div>
                               {cand.location && (
-                                <div className="text-[11px] text-slate-500 font-mono">Location: {cand.location}</div>
+                                <div className="text-[11px] text-[#A3A3A3] font-mono">Location: {cand.location}</div>
                               )}
                             </div>
                             <div className="text-right">
-                              <div className="font-mono font-bold text-purple-300">
+                              <div className="font-mono font-bold text-[#A855F7]">
                                 {(cand.semantic_similarity * 100).toFixed(1)}%
                               </div>
-                              <div className="text-[10px] text-slate-500">Semantic Cosine</div>
+                              <div className="text-[10px] text-[#A3A3A3]">Semantic Cosine</div>
                             </div>
                           </div>
                         ))}
@@ -679,50 +709,50 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
                 {activeStageTab === 4 && (
                   <div className="space-y-4 animate-in fade-in duration-150">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                        <Sliders className="w-4 h-4 text-amber-400" />
+                      <h3 className="text-sm font-bold text-[#EAEAEA] flex items-center gap-2">
+                        <Sliders className="w-4 h-4 text-[#F59E0B]" />
                         Stage 4: Multi-Signal Contextual Reconciliation Matrix
                       </h3>
-                      <span className="text-xs text-slate-400 font-mono">Selected: <strong className="text-brand-300">{lineageDetail.stage_4_context_reconciliation.selected_activity_id}</strong></span>
+                      <span className="text-xs text-[#A3A3A3] font-mono">Selected: <strong className="text-[#D4AF37]">{lineageDetail.stage_4_context_reconciliation.selected_activity_id}</strong></span>
                     </div>
 
                     {lineageDetail.stage_4_context_reconciliation.candidate_signals && (
                       <div className="panel-card p-4 space-y-4">
-                        <div className="text-xs font-bold text-slate-300">6-Signal Weighted Contribution Breakdown</div>
+                        <div className="text-xs font-bold text-[#EAEAEA]">6-Signal Weighted Contribution Breakdown</div>
                         <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-center">
-                          <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1">
-                            <div className="text-[10px] text-slate-400">Semantic (40%)</div>
-                            <div className="text-base font-mono font-bold text-purple-400">
+                          <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
+                            <div className="text-[10px] text-[#A3A3A3] uppercase font-bold">Semantic (40%)</div>
+                            <div className="text-base font-mono font-bold text-[#D4AF37]">
                               {(lineageDetail.stage_4_context_reconciliation.candidate_signals.semantic_score * 100).toFixed(0)}%
                             </div>
                           </div>
-                          <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1">
-                            <div className="text-[10px] text-slate-400">Asset/Line ID (20%)</div>
-                            <div className="text-base font-mono font-bold text-brand-400">
+                          <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
+                            <div className="text-[10px] text-[#A3A3A3] uppercase font-bold">Asset/Line ID (20%)</div>
+                            <div className="text-base font-mono font-bold text-[#10B981]">
                               {(lineageDetail.stage_4_context_reconciliation.candidate_signals.identifier_score * 100).toFixed(0)}%
                             </div>
                           </div>
-                          <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1">
-                            <div className="text-[10px] text-slate-400">Discipline (15%)</div>
-                            <div className="text-base font-mono font-bold text-cyan-400">
+                          <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
+                            <div className="text-[10px] text-[#A3A3A3] uppercase font-bold">Discipline (15%)</div>
+                            <div className="text-base font-mono font-bold text-[#3B82F6]">
                               {(lineageDetail.stage_4_context_reconciliation.candidate_signals.discipline_score * 100).toFixed(0)}%
                             </div>
                           </div>
-                          <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1">
-                            <div className="text-[10px] text-slate-400">Location (10%)</div>
-                            <div className="text-base font-mono font-bold text-emerald-400">
+                          <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
+                            <div className="text-[10px] text-[#A3A3A3] uppercase font-bold">Location (10%)</div>
+                            <div className="text-base font-mono font-bold text-[#F59E0B]">
                               {(lineageDetail.stage_4_context_reconciliation.candidate_signals.location_score * 100).toFixed(0)}%
                             </div>
                           </div>
-                          <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1">
-                            <div className="text-[10px] text-slate-400">WBS Context (10%)</div>
-                            <div className="text-base font-mono font-bold text-amber-400">
+                          <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
+                            <div className="text-[10px] text-[#A3A3A3] uppercase font-bold">WBS Context (10%)</div>
+                            <div className="text-base font-mono font-bold text-[#A855F7]">
                               {(lineageDetail.stage_4_context_reconciliation.candidate_signals.wbs_score * 100).toFixed(0)}%
                             </div>
                           </div>
-                          <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1">
-                            <div className="text-[10px] text-slate-400">Temporal (5%)</div>
-                            <div className="text-base font-mono font-bold text-blue-400">
+                          <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
+                            <div className="text-[10px] text-[#A3A3A3] uppercase font-bold">Temporal (5%)</div>
+                            <div className="text-base font-mono font-bold text-[#EC4899]">
                               {(lineageDetail.stage_4_context_reconciliation.candidate_signals.temporal_score * 100).toFixed(0)}%
                             </div>
                           </div>
@@ -736,11 +766,11 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
                 {activeStageTab === 5 && (
                   <div className="space-y-4 animate-in fade-in duration-150">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                        <Layers className="w-4 h-4 text-emerald-400" />
+                      <h3 className="text-sm font-bold text-[#EAEAEA] flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-[#10B981]" />
                         Stage 5: Confidence Calculation & Signal Diagnostics
                       </h3>
-                      <div className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">
+                      <div className="text-xs font-mono font-bold text-[#10B981] bg-[#10B981]/15 px-2.5 py-0.5 rounded border border-[#10B981]/30">
                         {lineageDetail.stage_5_confidence_signals.confidence_tier} CONFIDENCE ({(lineageDetail.stage_5_confidence_signals.final_confidence * 100).toFixed(1)}%)
                       </div>
                     </div>
@@ -748,42 +778,42 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Positive Supporting Signals */}
                       <div className="panel-card p-4 space-y-3">
-                        <div className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                        <div className="text-xs font-bold text-[#10B981] flex items-center gap-1.5">
                           <CheckCircle className="w-3.5 h-3.5" />
                           Positive Matching Signals ({lineageDetail.stage_5_confidence_signals.positive_signals.length})
                         </div>
                         {lineageDetail.stage_5_confidence_signals.positive_signals.length > 0 ? (
                           <ul className="space-y-2 text-xs">
                             {lineageDetail.stage_5_confidence_signals.positive_signals.map((sig, idx) => (
-                              <li key={idx} className="p-2 bg-slate-950 rounded border border-slate-800 text-slate-300 flex items-start gap-2">
-                                <span className="text-emerald-400 font-bold font-mono text-[11px] mt-0.5">&bull;</span>
+                              <li key={idx} className="p-2.5 bg-[#0A0A0A] rounded-xl border border-[#2A2A2A] text-[#EAEAEA] flex items-start gap-2">
+                                <span className="text-[#10B981] font-bold font-mono text-[11px] mt-0.5">•</span>
                                 <span>{sig}</span>
                               </li>
                             ))}
                           </ul>
                         ) : (
-                          <div className="text-xs text-slate-500 italic">No specific positive signals listed.</div>
+                          <div className="text-xs text-[#A3A3A3] italic">No specific positive signals listed.</div>
                         )}
                       </div>
 
                       {/* Conflicting / Risk Signals */}
                       <div className="panel-card p-4 space-y-3">
-                        <div className="text-xs font-bold text-rose-400 flex items-center gap-1.5">
+                        <div className="text-xs font-bold text-[#EF4444] flex items-center gap-1.5">
                           <AlertTriangle className="w-3.5 h-3.5" />
                           Conflicting & Ambiguity Flags ({lineageDetail.stage_5_confidence_signals.conflicting_signals.length})
                         </div>
                         {lineageDetail.stage_5_confidence_signals.conflicting_signals.length > 0 ? (
                           <ul className="space-y-2 text-xs">
                             {lineageDetail.stage_5_confidence_signals.conflicting_signals.map((c, idx) => (
-                              <li key={idx} className="p-2 bg-rose-950/20 rounded border border-rose-500/20 text-rose-300 flex items-start gap-2">
-                                <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
+                              <li key={idx} className="p-2.5 bg-[#EF4444]/10 rounded-xl border border-[#EF4444]/30 text-[#EF4444] flex items-start gap-2">
+                                <AlertTriangle className="w-3.5 h-3.5 text-[#EF4444] shrink-0 mt-0.5" />
                                 <span>{c}</span>
                               </li>
                             ))}
                           </ul>
                         ) : (
-                          <div className="p-3 bg-emerald-950/20 border border-emerald-500/20 rounded text-xs text-emerald-300 flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <div className="p-3.5 bg-[#10B981]/10 border border-[#10B981]/30 rounded-xl text-xs text-[#10B981] flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-[#10B981] shrink-0" />
                             <span>Zero conflicting or discordant signals detected. Clean match.</span>
                           </div>
                         )}
@@ -796,31 +826,31 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
                 {activeStageTab === 6 && (
                   <div className="space-y-4 animate-in fade-in duration-150">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                        <UserCheck className="w-4 h-4 text-brand-400" />
+                      <h3 className="text-sm font-bold text-[#EAEAEA] flex items-center gap-2">
+                        <UserCheck className="w-4 h-4 text-[#D4AF37]" />
                         Stage 6: Human-in-the-Loop Decision Gate
                       </h3>
                       {getActionBadge(lineageDetail.stage_6_human_decision.action_type)}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                      <div className="panel-card p-3 space-y-1">
-                        <div className="text-slate-500 text-[11px]">Reviewer ID / Actor</div>
-                        <div className="text-slate-200 font-bold font-mono">{lineageDetail.stage_6_human_decision.reviewer_id}</div>
+                      <div className="panel-card p-3.5 space-y-1">
+                        <div className="text-[#A3A3A3] text-[10px] uppercase font-bold">Reviewer ID / Actor</div>
+                        <div className="text-[#EAEAEA] font-bold font-mono">{lineageDetail.stage_6_human_decision.reviewer_id}</div>
                       </div>
-                      <div className="panel-card p-3 space-y-1">
-                        <div className="text-slate-500 text-[11px]">Action Type</div>
-                        <div className="text-brand-300 font-mono font-semibold">{lineageDetail.stage_6_human_decision.action_type}</div>
+                      <div className="panel-card p-3.5 space-y-1">
+                        <div className="text-[#A3A3A3] text-[10px] uppercase font-bold">Action Type</div>
+                        <div className="text-[#D4AF37] font-mono font-bold">{lineageDetail.stage_6_human_decision.action_type}</div>
                       </div>
-                      <div className="panel-card p-3 space-y-1">
-                        <div className="text-slate-500 text-[11px]">Semantic Progress Mode</div>
-                        <div className="text-slate-200 font-mono font-semibold">{lineageDetail.stage_6_human_decision.progress_mode || 'CUMULATIVE_ACTIVITY'}</div>
+                      <div className="panel-card p-3.5 space-y-1">
+                        <div className="text-[#A3A3A3] text-[10px] uppercase font-bold">Semantic Progress Mode</div>
+                        <div className="text-[#EAEAEA] font-mono font-semibold">{lineageDetail.stage_6_human_decision.progress_mode || 'CUMULATIVE_ACTIVITY'}</div>
                       </div>
                     </div>
 
                     <div className="panel-card p-4 space-y-2">
-                      <div className="text-xs font-bold text-slate-300">Decision Rationale & Review Notes</div>
-                      <p className="text-xs text-slate-300 bg-slate-950 p-3 rounded border border-slate-800 leading-relaxed font-mono">
+                      <div className="text-xs font-bold text-[#EAEAEA]">Decision Rationale & Review Notes</div>
+                      <p className="text-xs text-[#EAEAEA] bg-[#0A0A0A] p-3.5 rounded-xl border border-[#2A2A2A] leading-relaxed font-sans">
                         {lineageDetail.stage_6_human_decision.decision_notes || 'Approved as matching candidate.'}
                       </p>
                     </div>
@@ -831,46 +861,46 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
                 {activeStageTab === 7 && (
                   <div className="space-y-4 animate-in fade-in duration-150">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                        <ShieldCheck className="w-4 h-4 text-purple-400" />
+                      <h3 className="text-sm font-bold text-[#EAEAEA] flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
                         Stage 7: Verified Execution State Comparison
                       </h3>
-                      <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">
+                      <span className="text-xs font-mono text-[#10B981] bg-[#10B981]/15 px-2.5 py-0.5 rounded border border-[#10B981]/30 font-bold">
                         Target Activity: {lineageDetail.stage_7_verified_state.activity_id}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Before State */}
-                      <div className="panel-card p-4 space-y-3 bg-slate-950/70 border-slate-800">
-                        <div className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
+                      <div className="panel-card p-4 space-y-3 bg-[#0A0A0A]">
+                        <div className="text-xs font-bold text-[#A3A3A3] flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5" />
                           Previous Execution State (Before Decision)
                         </div>
                         <div className="space-y-2 text-xs">
-                          <div className="flex justify-between py-1 border-b border-slate-800/60">
-                            <span className="text-slate-500">Actual Progress:</span>
-                            <span className="font-mono text-slate-300">
+                          <div className="flex justify-between py-1 border-b border-[#2A2A2A]">
+                            <span className="text-[#A3A3A3]">Actual Progress:</span>
+                            <span className="font-mono text-[#EAEAEA]">
                               {lineageDetail.stage_7_verified_state.previous_state?.actual_progress !== undefined
                                 ? `${lineageDetail.stage_7_verified_state.previous_state.actual_progress}%`
                                 : '0.0%'}
                             </span>
                           </div>
-                          <div className="flex justify-between py-1 border-b border-slate-800/60">
-                            <span className="text-slate-500">Status:</span>
-                            <span className="font-mono text-slate-300">
+                          <div className="flex justify-between py-1 border-b border-[#2A2A2A]">
+                            <span className="text-[#A3A3A3]">Status:</span>
+                            <span className="font-mono text-[#EAEAEA]">
                               {lineageDetail.stage_7_verified_state.previous_state?.status || 'Not Started'}
                             </span>
                           </div>
-                          <div className="flex justify-between py-1 border-b border-slate-800/60">
-                            <span className="text-slate-500">Verified Observations:</span>
-                            <span className="font-mono text-slate-300">
+                          <div className="flex justify-between py-1 border-b border-[#2A2A2A]">
+                            <span className="text-[#A3A3A3]">Verified Observations:</span>
+                            <span className="font-mono text-[#EAEAEA]">
                               {lineageDetail.stage_7_verified_state.previous_state?.verified_observations_count || 0}
                             </span>
                           </div>
                           <div className="flex justify-between py-1">
-                            <span className="text-slate-500">Delay (Days):</span>
-                            <span className="font-mono text-slate-300">
+                            <span className="text-[#A3A3A3]">Delay (Days):</span>
+                            <span className="font-mono text-[#EAEAEA]">
                               {lineageDetail.stage_7_verified_state.previous_state?.delay_days || 0}
                             </span>
                           </div>
@@ -878,35 +908,35 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
                       </div>
 
                       {/* After State */}
-                      <div className="panel-card p-4 space-y-3 bg-slate-950/90 border-emerald-500/30">
-                        <div className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                      <div className="panel-card p-4 space-y-3 bg-[#0A0A0A] border-[#10B981]/40">
+                        <div className="text-xs font-bold text-[#10B981] flex items-center gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           New Verified Execution State (Post-Reconciliation)
                         </div>
                         <div className="space-y-2 text-xs">
-                          <div className="flex justify-between py-1 border-b border-slate-800/60">
-                            <span className="text-slate-400">Actual Progress:</span>
-                            <span className="font-mono font-bold text-emerald-400">
+                          <div className="flex justify-between py-1 border-b border-[#2A2A2A]">
+                            <span className="text-[#A3A3A3]">Actual Progress:</span>
+                            <span className="font-mono font-bold text-[#10B981]">
                               {lineageDetail.stage_7_verified_state.resulting_progress !== undefined
                                 ? `${lineageDetail.stage_7_verified_state.resulting_progress}%`
                                 : 'Updated'}
                             </span>
                           </div>
-                          <div className="flex justify-between py-1 border-b border-slate-800/60">
-                            <span className="text-slate-400">Status:</span>
-                            <span className="font-mono font-semibold text-cyan-300">
+                          <div className="flex justify-between py-1 border-b border-[#2A2A2A]">
+                            <span className="text-[#A3A3A3]">Status:</span>
+                            <span className="font-mono font-semibold text-[#D4AF37]">
                               {lineageDetail.stage_7_verified_state.resulting_status || 'VERIFIED'}
                             </span>
                           </div>
-                          <div className="flex justify-between py-1 border-b border-slate-800/60">
-                            <span className="text-slate-400">Verified Observations:</span>
-                            <span className="font-mono font-bold text-brand-300">
+                          <div className="flex justify-between py-1 border-b border-[#2A2A2A]">
+                            <span className="text-[#A3A3A3]">Verified Observations:</span>
+                            <span className="font-mono font-bold text-[#D4AF37]">
                               {lineageDetail.stage_7_verified_state.new_state?.verified_observations_count || 1}
                             </span>
                           </div>
                           <div className="flex justify-between py-1">
-                            <span className="text-slate-400">Verified Delay (Days):</span>
-                            <span className="font-mono text-slate-200">
+                            <span className="text-[#A3A3A3]">Verified Delay (Days):</span>
+                            <span className="font-mono text-[#EAEAEA]">
                               {lineageDetail.stage_7_verified_state.resulting_delay_days || 0}
                             </span>
                           </div>
@@ -919,9 +949,9 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
             )}
 
             {/* Modal Footer */}
-            <div className="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
+            <div className="p-4 bg-[#111111] border-t border-[#2A2A2A] flex items-center justify-between text-xs text-[#A3A3A3]">
               <div className="flex items-center gap-2">
-                <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                <Lock className="w-3.5 h-3.5 text-[#10B981]" />
                 <span>Zero-Secret Audit Serialization Verified</span>
               </div>
               <button
@@ -929,7 +959,7 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
                   setSelectedAuditId(null);
                   setLineageDetail(null);
                 }}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-lg transition-colors"
+                className="px-4 py-2 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#EAEAEA] font-bold rounded-xl transition-colors border border-[#2A2A2A]"
               >
                 Close Inspector
               </button>
@@ -940,3 +970,4 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
     </div>
   );
 }
+

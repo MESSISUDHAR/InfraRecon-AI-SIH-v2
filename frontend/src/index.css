@@ -5,59 +5,404 @@
 @layer base {
   :root {
     color-scheme: dark;
+    --sparta-bg: #0A0A0A;
+    --sparta-surface: #111111;
+    --sparta-elevated: #1A1A1A;
+    --sparta-gold: #D4AF37;
+    --sparta-gold-accent: #F4D06F;
+    --sparta-gold-hover: #FFD700;
+    --sparta-text: #EAEAEA;
+    --sparta-muted: #A3A3A3;
+    --sparta-border: #2A2A2A;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
   }
   
   body {
-    @apply bg-slate-950 text-slate-100 font-sans selection:bg-brand-500 selection:text-white;
+    background-color: #0A0A0A;
+    color: #EAEAEA;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    selection-background-color: #D4AF37;
+    selection-color: #0A0A0A;
+    @apply antialiased transition-colors duration-150;
   }
 
-  /* Custom enterprise scrollbar */
+  ::selection {
+    background-color: #D4AF37;
+    color: #0A0A0A;
+  }
+
+  html.light body {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+  }
+
+  /* Sparta High-Tech Gold Custom Scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #0b1120;
+    background: #0A0A0A;
   }
   ::-webkit-scrollbar-thumb {
-    background: #1e293b;
+    background: #2A2A2A;
     border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #334155;
+    background: #D4AF37;
+  }
+
+  html.light ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+  html.light ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+  }
+  html.light ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
   }
 }
 
 @layer components {
+  /* Sparta Titan 17 Panel Card */
   .panel-card {
-    @apply bg-slate-900/80 border border-slate-800/80 rounded-xl backdrop-blur-md shadow-sm transition-all duration-200;
+    background-color: #111111;
+    border: 1px solid #2A2A2A;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 1px rgba(212, 175, 55, 0.08);
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .panel-card:hover {
-    @apply border-slate-700/80 shadow-md;
+    border-color: rgba(212, 175, 55, 0.35);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7), 0 0 12px rgba(212, 175, 55, 0.12);
   }
 
+  html.light .panel-card {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05) !important;
+  }
+  html.light .panel-card:hover {
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  /* Sparta Primary Button (Gold Metallic Gradient) */
   .btn-primary {
-    @apply bg-brand-600 hover:bg-brand-500 active:bg-brand-700 text-white font-medium px-4 py-2 rounded-lg transition-all shadow-sm shadow-brand-600/20 flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, #D4AF37 0%, #F4D06F 100%);
+    color: #0A0A0A;
+    font-weight: 700;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.25);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    border: none;
+    cursor: pointer;
   }
 
+  .btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #FFD700 0%, #F4D06F 100%);
+    box-shadow: 0 4px 14px rgba(212, 175, 55, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:active:not(:disabled) {
+    background: linear-gradient(135deg, #b89122 0%, #D4AF37 100%);
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(212, 175, 55, 0.2);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  /* Sparta Secondary Button (Elevated Dark Surface with Subtle Gold/Border Hover) */
   .btn-secondary {
-    @apply bg-slate-800 hover:bg-slate-700 active:bg-slate-850 text-slate-200 border border-slate-700 font-medium px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: #1A1A1A;
+    color: #EAEAEA;
+    border: 1px solid #2A2A2A;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 180ms ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    cursor: pointer;
   }
 
+  .btn-secondary:hover:not(:disabled) {
+    background-color: #222222;
+    border-color: rgba(212, 175, 55, 0.6);
+    color: #FFFFFF;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  .btn-secondary:active:not(:disabled) {
+    background-color: #151515;
+  }
+
+  .btn-secondary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  html.light .btn-secondary {
+    background-color: #f1f5f9 !important;
+    color: #1e293b !important;
+    border-color: #cbd5e1 !important;
+  }
+  html.light .btn-secondary:hover {
+    background-color: #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  /* Sparta Outline Button */
   .btn-outline {
-    @apply border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white font-medium px-3.5 py-1.5 rounded-lg transition-all text-xs flex items-center gap-1.5;
+    border: 1px solid #2A2A2A;
+    color: #A3A3A3;
+    background-color: transparent;
+    font-weight: 600;
+    padding: 0.375rem 0.875rem;
+    border-radius: 0.5rem;
+    transition: all 180ms ease-in-out;
+    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    cursor: pointer;
   }
 
+  .btn-outline:hover:not(:disabled) {
+    border-color: #D4AF37;
+    color: #D4AF37;
+    background-color: rgba(212, 175, 55, 0.05);
+  }
+
+  html.light .btn-outline {
+    border-color: #cbd5e1 !important;
+    color: #334155 !important;
+  }
+  html.light .btn-outline:hover {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+  }
+
+  /* Status Badges */
   .badge-high {
-    @apply bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    background-color: rgba(16, 185, 129, 0.12);
+    color: #10B981;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
   }
 
   .badge-medium {
-    @apply bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    background-color: rgba(245, 158, 11, 0.12);
+    color: #F59E0B;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
   }
 
   .badge-low {
-    @apply bg-rose-500/10 text-rose-400 border border-rose-500/30 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    background-color: rgba(239, 68, 68, 0.12);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .badge-gold {
+    background-color: rgba(212, 175, 55, 0.12);
+    color: #D4AF37;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .badge-info {
+    background-color: rgba(59, 130, 246, 0.12);
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  html.light .badge-high {
+    background-color: #ecfdf5 !important;
+    color: #047857 !important;
+    border-color: #a7f3d0 !important;
+  }
+
+  html.light .badge-medium {
+    background-color: #fffbeb !important;
+    color: #b45309 !important;
+    border-color: #fde68a !important;
+  }
+
+  html.light .badge-low {
+    background-color: #fff1f2 !important;
+    color: #be123c !important;
+    border-color: #fecdd3 !important;
   }
 }
+
+/* =========================================================
+   LIGHT THEME OVERRIDES (Scoped strictly to html.light)
+   ========================================================= */
+
+html.light header {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light aside {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light main {
+  background: #f8fafc !important;
+}
+
+html.light .bg-slate-950,
+html.light .bg-slate-950\/90,
+html.light .bg-slate-950\/80,
+html.light .bg-slate-950\/70,
+html.light .bg-slate-950\/60,
+html.light .bg-slate-950\/50,
+html.light .bg-slate-950\/40 {
+  background-color: #f1f5f9 !important;
+}
+
+html.light .bg-slate-900,
+html.light .bg-slate-900\/90,
+html.light .bg-slate-900\/80,
+html.light .bg-slate-900\/70,
+html.light .bg-slate-900\/60,
+html.light .bg-slate-900\/40,
+html.light .bg-slate-850,
+html.light .bg-slate-850\/80 {
+  background-color: #ffffff !important;
+}
+
+html.light .bg-slate-800,
+html.light .bg-slate-800\/90,
+html.light .bg-slate-800\/80,
+html.light .bg-slate-800\/70,
+html.light .bg-slate-800\/50 {
+  background-color: #e2e8f0 !important;
+}
+
+html.light .border-slate-800,
+html.light .border-slate-800\/90,
+html.light .border-slate-800\/80,
+html.light .border-slate-800\/70,
+html.light .border-slate-800\/60,
+html.light .border-slate-800\/50,
+html.light .border-slate-800\/40 {
+  border-color: #e2e8f0 !important;
+}
+
+html.light .border-slate-700,
+html.light .border-slate-700\/80,
+html.light .border-slate-700\/50 {
+  border-color: #cbd5e1 !important;
+}
+
+html.light .border-slate-600 {
+  border-color: #94a3b8 !important;
+}
+
+html.light .text-slate-100 {
+  color: #0f172a !important;
+}
+
+html.light .text-slate-200 {
+  color: #1e293b !important;
+}
+
+html.light .text-slate-300 {
+  color: #334155 !important;
+}
+
+html.light .text-slate-400 {
+  color: #64748b !important;
+}
+
+html.light .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+html.light input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+html.light select,
+html.light textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+html.light th {
+  background-color: #f1f5f9 !important;
+  color: #334155 !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light tbody tr:hover {
+  background-color: #f8fafc !important;
+}
+
+html.light td {
+  border-color: #e2e8f0 !important;
+}
+

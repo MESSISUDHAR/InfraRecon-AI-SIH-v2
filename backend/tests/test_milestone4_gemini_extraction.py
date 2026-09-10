@@ -15,7 +15,7 @@ client = TestClient(app)
 
 def test_scenario_1_spool_extraction():
     text = "Yesterday evening the 24-inch spool erection at PR-04 was completed. Line 24-XX was inspected."
-    extracted, elapsed_ms, warnings = extract_execution_event_with_gemini(text, "PRJ-REF-04", "DPR-01")
+    extracted, elapsed_ms, warnings, engine = extract_execution_event_with_gemini(text, "PRJ-REF-04", "DPR-01")
     
     assert extracted.discipline == "Piping"
     assert "PR-04" in (extracted.location or "")
@@ -25,10 +25,11 @@ def test_scenario_1_spool_extraction():
     assert extracted.status == "EXTRACTED"
     assert "24-inch spool erection" in (extracted.activity_description or extracted.evidence_text or "")
     assert extracted.extraction_confidence >= 0.85
+    assert engine in ["gemini", "heuristic_fallback"]
 
 def test_scenario_2_civil_drainage_extraction():
     text = "Laying of 500mm underground drainage conduit in Zone 3 completed today by civil team."
-    extracted, elapsed_ms, warnings = extract_execution_event_with_gemini(text, "PRJ-REF-04", "DPR-02")
+    extracted, elapsed_ms, warnings, engine = extract_execution_event_with_gemini(text, "PRJ-REF-04", "DPR-02")
     
     assert extracted.discipline == "Civil"
     assert "Zone 3" in (extracted.location or "")
@@ -42,7 +43,7 @@ def test_scenario_3_missing_asset_id_null_safety():
     strictly return None (null) and are never hallucinated.
     """
     text = "Finished foundation concrete pouring at Compressor Bay 2. 45 cubic meters placed."
-    extracted, elapsed_ms, warnings = extract_execution_event_with_gemini(text, "PRJ-REF-04", "DPR-03")
+    extracted, elapsed_ms, warnings, engine = extract_execution_event_with_gemini(text, "PRJ-REF-04", "DPR-03")
     
     assert extracted.discipline == "Civil"
     assert "Compressor Bay 2" in (extracted.location or "")
@@ -54,7 +55,7 @@ def test_scenario_3_missing_asset_id_null_safety():
 
 def test_scenario_4_electrical_ambiguous_candidate():
     text = "Cable tray installation started on Level 2 today."
-    extracted, elapsed_ms, warnings = extract_execution_event_with_gemini(text, "PRJ-REF-04", "DPR-04")
+    extracted, elapsed_ms, warnings, engine = extract_execution_event_with_gemini(text, "PRJ-REF-04", "DPR-04")
     
     assert extracted.discipline == "Electrical"
     assert "Level 2" in (extracted.location or "")
@@ -66,7 +67,7 @@ def test_scenario_5_multi_day_progress_extraction():
     Verifies accurate extraction of partial event progress (e.g. 75%).
     """
     text = "Spool installation at PR-04 progressed to 75% today. Final bolt-up underway."
-    extracted, elapsed_ms, warnings = extract_execution_event_with_gemini(text, "PRJ-REF-04", "DPR-05")
+    extracted, elapsed_ms, warnings, engine = extract_execution_event_with_gemini(text, "PRJ-REF-04", "DPR-05")
     
     assert extracted.discipline == "Piping"
     assert "PR-04" in (extracted.location or "")
@@ -91,7 +92,8 @@ def test_api_extract_endpoint_persists_to_db():
     assert data["event"]["status"] == "EXTRACTED"
     assert data["event"]["discipline"] == "Piping"
     assert data["event"]["line_id"] == "24-XX"
-    assert data["model_version"] == "gemini-2.5-flash"
+    assert "engine" in data
+    assert data["engine"] in ["gemini", "heuristic_fallback"]
 
     # Verify database isolation: ExecutionEvent was saved, but ExecutionState remains unperturbed
     db = SessionLocal()
@@ -122,3 +124,4 @@ def test_api_extract_by_event_id():
     assert extract_data["event"]["status"] == "EXTRACTED"
     assert extract_data["event"]["discipline"] == "Civil"
     assert "Zone 3" in extract_data["event"]["location"]
+    assert "engine" in extract_data

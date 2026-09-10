@@ -6,6 +6,8 @@ import {
   getActivityDependencyDetail,
   getProjects
 } from '../services/api';
+import TimelineAuditDrawer from '../components/ExecutionState/TimelineAuditDrawer';
+import { Layers, Activity, RefreshCw, Sparkles, CheckCircle2, Clock, AlertTriangle, FileText, ArrowRight, ShieldCheck } from 'lucide-react';
 
 const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
   const [projectId, setProjectId] = useState(initialProjectId);
@@ -23,11 +25,11 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
 
   // Selected Activity Detail for History Timeline Drawer
   const [selectedActivity, setSelectedActivity] = useState(null);
+  const [selectedActivityId, setSelectedActivityId] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [drawerTab, setDrawerTab] = useState('TIMELINE'); // 'TIMELINE' | 'DEPENDENCIES' | 'AUDIT'
+  const [detailError, setDetailError] = useState(null);
   const [dependencyDetail, setDependencyDetail] = useState(null);
-  const [dependencyLoading, setDependencyLoading] = useState(false);
 
   // Load project list once
   useEffect(() => {
@@ -78,10 +80,18 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
   }, [projectId, disciplineFilter, statusFilter, searchTerm]);
 
   const handleOpenDetail = async (activityId) => {
+    setSelectedActivityId(activityId);
     setDetailLoading(true);
     setDrawerOpen(true);
-    setDrawerTab('TIMELINE');
+    setDetailError(null);
     setDependencyDetail(null);
+    
+    // Quick preview from list while fetching full audit/evidence history
+    const existing = activities.find(a => a.activity_id === activityId);
+    if (existing) {
+      setSelectedActivity(existing);
+    }
+
     try {
       const [actRes, depRes] = await Promise.all([
         getActivityExecutionStateDetail(activityId, projectId),
@@ -93,12 +103,15 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
 
       if (actRes.success) {
         setSelectedActivity(actRes.data);
+      } else {
+        setDetailError('Unable to load activity history.');
       }
       if (depRes && depRes.success) {
         setDependencyDetail(depRes.data);
       }
     } catch (err) {
       console.error('Failed to load activity details:', err);
+      setDetailError(err.response?.data?.detail || err.message || 'Unable to load activity history.');
     } finally {
       setDetailLoading(false);
     }
@@ -107,91 +120,69 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'Completed':
-        return <span className="badge badge-success">✓ Completed</span>;
+        return (
+          <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 flex items-center gap-1 w-fit">
+            <CheckCircle2 className="w-3 h-3" />
+            <span>Completed</span>
+          </span>
+        );
       case 'In Progress':
-        return <span className="badge badge-primary">⏳ In Progress</span>;
+        return (
+          <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30 flex items-center gap-1 w-fit">
+            <Clock className="w-3 h-3" />
+            <span>In Progress</span>
+          </span>
+        );
       case 'Behind Schedule':
-        return <span className="badge badge-error">⚠ Behind Schedule</span>;
-      default:
-        return <span className="badge badge-neutral">⚪ Not Started</span>;
-    }
-  };
-
-  const getRiskSeverityBadge = (severity) => {
-    switch (severity) {
-      case 'CRITICAL':
         return (
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">
-            CRITICAL
-          </span>
-        );
-      case 'HIGH':
-        return (
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
-            HIGH
-          </span>
-        );
-      case 'MEDIUM':
-        return (
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-            MEDIUM
-          </span>
-        );
-      case 'BUFFERED':
-        return (
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-            BUFFERED
+          <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/30 flex items-center gap-1 w-fit">
+            <AlertTriangle className="w-3 h-3" />
+            <span>Behind Schedule</span>
           </span>
         );
       default:
         return (
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">
-            {severity || 'NONE'}
+          <span className="text-xs px-2.5 py-0.5 rounded-full font-medium bg-[#111111] text-[#A3A3A3] border border-[#2A2A2A] w-fit">
+            ⚪ Not Started
           </span>
         );
-    }
-  };
-
-  const getProgressModeBadge = (mode) => {
-    switch (mode) {
-      case 'CUMULATIVE_ACTIVITY':
-        return <span className="badge badge-primary text-xs">Cumulative Activity</span>;
-      case 'SUB_WORK':
-        return <span className="badge badge-warning text-xs">Sub-Work / Component</span>;
-      case 'EXPLICIT_COMPLETION':
-        return <span className="badge badge-success text-xs">Explicit Completion</span>;
-      default:
-        return <span className="badge badge-neutral text-xs">{mode}</span>;
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto">
       {/* Header & Project Selector */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#2A2A2A] pb-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-text-primary tracking-tight">
-              Verified Execution State
-            </h1>
-            <span className="badge badge-success text-xs font-semibold px-2.5 py-1">
-              Milestone 9 Active
-            </span>
+            <div className="p-2.5 bg-[#111111] border border-[#D4AF37]/30 rounded-xl shadow-[0_0_15px_rgba(212,175,55,0.15)]">
+              <Activity className="w-6 h-6 text-[#D4AF37]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-black text-[#EAEAEA] tracking-tight">
+                  Verified Execution State
+                </h1>
+                <span className="text-[10px] font-bold px-2 py-0.5 bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 rounded-full font-mono">
+                  ACTIVE
+                </span>
+              </div>
+              <p className="text-xs text-[#A3A3A3] mt-0.5">
+                Separation of raw field extractions from trusted project progress with cumulative multi-observation lineage and delay tracking.
+              </p>
+            </div>
           </div>
-          <p className="text-text-secondary text-sm mt-1">
-            Separation of raw field extractions from trusted project progress with cumulative multi-observation lineage and delay tracking.
-          </p>
         </div>
 
         <div className="flex items-center gap-3">
           <select
             value={projectId}
             onChange={(e) => setProjectId(e.target.value)}
-            className="input text-sm py-1.5 px-3 bg-card-bg border-border rounded-lg text-text-primary font-mono"
+            className="text-xs py-2 px-3 bg-[#111111] border border-[#2A2A2A] rounded-xl text-[#EAEAEA] font-mono focus:outline-none focus:border-[#D4AF37]"
           >
             {projectsList.length > 0 ? (
               projectsList.map((p) => (
-                <option key={p.id} value={p.id}>
+                <option key={p.id} value={p.id} className="bg-[#111111] text-[#EAEAEA]">
                   {p.code || p.id} - {p.name}
                 </option>
               ))
@@ -201,19 +192,23 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
           </select>
           <button
             onClick={fetchData}
-            className="btn btn-secondary text-sm py-1.5 px-3"
+            className="btn-secondary text-xs py-2 px-3.5 flex items-center gap-1.5"
             title="Refresh Data"
           >
-            🔄 Refresh
+            <RefreshCw className={`w-3.5 h-3.5 text-[#D4AF37] ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
           </button>
         </div>
       </div>
 
       {/* Semantic Distinction Banner */}
-      <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 flex items-start gap-3">
-        <div className="text-xl">💡</div>
-        <div className="text-xs text-text-secondary leading-relaxed">
-          <strong className="text-text-primary block font-semibold text-sm mb-0.5">
+      <div className="bg-[#111111] border border-[#D4AF37]/30 rounded-xl p-4 flex items-start gap-3.5 relative overflow-hidden shadow-lg">
+        <div className="absolute top-0 left-0 w-1 h-full bg-[#D4AF37]" />
+        <div className="p-1.5 bg-[#D4AF37]/10 rounded-lg shrink-0 mt-0.5 border border-[#D4AF37]/20">
+          <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+        </div>
+        <div className="text-xs text-[#A3A3A3] leading-relaxed">
+          <strong className="text-[#D4AF37] block font-bold text-sm mb-0.5">
             Architecture Rule: Event-Level Progress vs Verified Activity Progress
           </strong>
           Raw field observations capture discrete sub-work segments (e.g. 100% of a foundation sub-pour or 50m spool segment) without prematurely marking whole scheduled tasks complete. Verified cumulative progress accumulates monotonically under planner governance, preserving every historical observation and audit trace.
@@ -223,65 +218,65 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
       {/* Executive Rollup KPI Cards */}
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="card p-4 border-l-4 border-l-primary bg-card-bg">
-            <div className="text-xs text-text-secondary font-medium uppercase tracking-wider">
+          <div className="panel-card p-4 border-l-4 border-l-[#D4AF37]">
+            <div className="text-xs text-[#A3A3A3] font-bold uppercase tracking-wider">
               Verified Progress
             </div>
-            <div className="text-2xl font-bold text-text-primary mt-1">
+            <div className="text-2xl font-black text-[#D4AF37] mt-1 font-mono">
               {summary.overall_actual_progress}%
             </div>
-            <div className="text-xs text-text-secondary mt-1 flex items-center gap-1">
+            <div className="text-xs text-[#A3A3A3] mt-1 flex items-center gap-1">
               <span>Planned: {summary.overall_planned_progress}%</span>
-              <span className={`font-semibold ${summary.overall_progress_variance >= 0 ? 'text-success' : 'text-error'}`}>
+              <span className={`font-semibold font-mono ${summary.overall_progress_variance >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
                 ({summary.overall_progress_variance >= 0 ? '+' : ''}{summary.overall_progress_variance}%)
               </span>
             </div>
           </div>
 
-          <div className="card p-4 border-l-4 border-l-success bg-card-bg">
-            <div className="text-xs text-text-secondary font-medium uppercase tracking-wider">
+          <div className="panel-card p-4 border-l-4 border-l-[#10B981]">
+            <div className="text-xs text-[#A3A3A3] font-bold uppercase tracking-wider">
               Completed Tasks
             </div>
-            <div className="text-2xl font-bold text-success mt-1">
+            <div className="text-2xl font-black text-[#10B981] mt-1 font-mono">
               {summary.completed_count}
             </div>
-            <div className="text-xs text-text-secondary mt-1">
+            <div className="text-xs text-[#A3A3A3] mt-1">
               of {summary.total_activities} activities
             </div>
           </div>
 
-          <div className="card p-4 border-l-4 border-l-blue-500 bg-card-bg">
-            <div className="text-xs text-text-secondary font-medium uppercase tracking-wider">
+          <div className="panel-card p-4 border-l-4 border-l-[#3B82F6]">
+            <div className="text-xs text-[#A3A3A3] font-bold uppercase tracking-wider">
               In Progress
             </div>
-            <div className="text-2xl font-bold text-blue-400 mt-1">
+            <div className="text-2xl font-black text-[#3B82F6] mt-1 font-mono">
               {summary.in_progress_count}
             </div>
-            <div className="text-xs text-text-secondary mt-1">
+            <div className="text-xs text-[#A3A3A3] mt-1">
               Active field workfronts
             </div>
           </div>
 
-          <div className="card p-4 border-l-4 border-l-error bg-card-bg">
-            <div className="text-xs text-text-secondary font-medium uppercase tracking-wider">
+          <div className="panel-card p-4 border-l-4 border-l-[#EF4444]">
+            <div className="text-xs text-[#A3A3A3] font-bold uppercase tracking-wider">
               Behind Schedule
             </div>
-            <div className="text-2xl font-bold text-error mt-1">
+            <div className="text-2xl font-black text-[#EF4444] mt-1 font-mono">
               {summary.delayed_count}
             </div>
-            <div className="text-xs text-text-secondary mt-1">
+            <div className="text-xs text-[#A3A3A3] mt-1">
               Progress or date variance
             </div>
           </div>
 
-          <div className="card p-4 border-l-4 border-l-purple-500 bg-card-bg">
-            <div className="text-xs text-text-secondary font-medium uppercase tracking-wider">
+          <div className="panel-card p-4 border-l-4 border-l-[#A855F7]">
+            <div className="text-xs text-[#A3A3A3] font-bold uppercase tracking-wider">
               Field Observations
             </div>
-            <div className="text-2xl font-bold text-purple-400 mt-1">
+            <div className="text-2xl font-black text-[#A855F7] mt-1 font-mono">
               {summary.total_verified_observations}
             </div>
-            <div className="text-xs text-text-secondary mt-1">
+            <div className="text-xs text-[#A3A3A3] mt-1">
               Mapped DPR reports
             </div>
           </div>
@@ -289,20 +284,20 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
       )}
 
       {/* Filter & Search Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-card-bg/60 p-3 rounded-xl border border-border">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#111111] p-3 rounded-xl border border-[#2A2A2A]">
+        <div className="flex flex-wrap items-center gap-2.5">
           <input
             type="text"
             placeholder="Search by code, name, area, line..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="input text-sm py-1.5 px-3 w-64 bg-background border-border rounded-lg text-text-primary"
+            className="text-xs py-2 px-3 w-64 bg-[#0A0A0A] border border-[#2A2A2A] rounded-xl text-[#EAEAEA] placeholder-[#555555] focus:outline-none focus:border-[#D4AF37] font-mono"
           />
 
           <select
             value={disciplineFilter}
             onChange={(e) => setDisciplineFilter(e.target.value)}
-            className="input text-sm py-1.5 px-3 bg-background border-border rounded-lg text-text-primary"
+            className="text-xs py-2 px-3 bg-[#0A0A0A] border border-[#2A2A2A] rounded-xl text-[#EAEAEA] focus:outline-none focus:border-[#D4AF37]"
           >
             <option value="ALL">All Disciplines</option>
             <option value="Piping">Piping</option>
@@ -315,7 +310,7 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="input text-sm py-1.5 px-3 bg-background border-border rounded-lg text-text-primary"
+            className="text-xs py-2 px-3 bg-[#0A0A0A] border border-[#2A2A2A] rounded-xl text-[#EAEAEA] focus:outline-none focus:border-[#D4AF37]"
           >
             <option value="ALL">All Statuses</option>
             <option value="Completed">Completed</option>
@@ -325,24 +320,24 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
           </select>
         </div>
 
-        <div className="text-xs text-text-secondary font-medium">
-          Showing {activities.length} of {totalCount} activities
+        <div className="text-xs text-[#A3A3A3] font-medium">
+          Showing <strong className="text-[#D4AF37] font-mono">{activities.length}</strong> of <strong className="text-[#EAEAEA] font-mono">{totalCount}</strong> activities
         </div>
       </div>
 
       {/* Error Alert */}
       {error && (
-        <div className="p-3 bg-error/10 border border-error/30 text-error rounded-lg text-sm">
+        <div className="p-3.5 bg-[#EF4444]/10 border border-[#EF4444]/30 text-[#EF4444] rounded-xl text-sm">
           {error}
         </div>
       )}
 
       {/* Activity Execution State Table */}
-      <div className="card overflow-hidden border border-border">
+      <div className="panel-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
+          <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-muted/40 border-b border-border text-xs uppercase font-semibold text-text-secondary">
+              <tr className="bg-[#0A0A0A] border-b border-[#2A2A2A] text-[10px] uppercase tracking-wider font-bold text-[#A3A3A3]">
                 <th className="py-3 px-4">Activity Code & Scope</th>
                 <th className="py-3 px-4">Discipline / Area</th>
                 <th className="py-3 px-4 w-56">Verified vs Planned Progress</th>
@@ -352,19 +347,19 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
                 <th className="py-3 px-4 text-right">Lineage</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-[#2A2A2A]">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-text-secondary">
+                  <td colSpan={7} className="text-center py-12 text-[#A3A3A3]">
                     <div className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                      <div className="w-4 h-4 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
                       <span>Loading verified execution states...</span>
                     </div>
                   </td>
                 </tr>
               ) : activities.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-text-secondary">
+                  <td colSpan={7} className="text-center py-12 text-[#A3A3A3]">
                     No activities found matching your criteria.
                   </td>
                 </tr>
@@ -372,59 +367,59 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
                 activities.map((act) => (
                   <tr
                     key={act.db_id}
-                    className="hover:bg-muted/30 transition-colors duration-150"
+                    className="hover:bg-[#1A1A1A] transition-colors duration-150"
                   >
                     <td className="py-3 px-4">
-                      <div className="font-mono text-xs font-semibold text-primary">
+                      <div className="font-mono text-xs font-bold text-[#D4AF37]">
                         {act.activity_id}
                       </div>
-                      <div className="text-xs text-text-primary font-medium mt-0.5 max-w-xs truncate" title={act.activity_name}>
+                      <div className="text-xs text-[#EAEAEA] font-medium mt-0.5 max-w-xs truncate" title={act.activity_name}>
                         {act.activity_name}
                       </div>
                     </td>
 
                     <td className="py-3 px-4">
-                      <div className="text-xs text-text-primary font-medium">
+                      <div className="text-xs text-[#EAEAEA] font-medium">
                         {act.discipline || 'General'}
                       </div>
-                      <div className="text-xs text-text-secondary mt-0.5">
+                      <div className="text-xs text-[#A3A3A3] mt-0.5">
                         {act.location || 'Unassigned'}
                       </div>
                     </td>
 
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="font-bold text-text-primary">
+                        <span className="font-bold text-[#EAEAEA] font-mono">
                           {act.actual_progress}%
                         </span>
-                        <span className="text-text-secondary">
+                        <span className="text-[#A3A3A3] font-mono text-[11px]">
                           Plan: {act.planned_progress || 0}%
                         </span>
                       </div>
-                      <div className="w-full bg-muted/60 h-2 rounded-full overflow-hidden relative">
+                      <div className="w-full bg-[#0A0A0A] h-2 rounded-full overflow-hidden relative border border-[#2A2A2A]">
                         <div
                           className={`h-full transition-all duration-300 ${
                             act.actual_progress >= 100
-                              ? 'bg-success'
+                              ? 'bg-gradient-to-r from-[#10B981] to-[#34D399]'
                               : act.is_delayed
-                              ? 'bg-error'
-                              : 'bg-primary'
+                              ? 'bg-gradient-to-r from-[#EF4444] to-[#F87171]'
+                              : 'bg-gradient-to-r from-[#D4AF37] to-[#F4D06F]'
                           }`}
                           style={{ width: `${Math.min(100, act.actual_progress)}%` }}
                         />
                       </div>
                       {act.progress_variance !== null && act.progress_variance !== 0 && (
-                        <div className={`text-[10px] mt-0.5 ${act.progress_variance >= 0 ? 'text-success' : 'text-error'}`}>
+                        <div className={`text-[10px] mt-0.5 font-mono ${act.progress_variance >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
                           Variance: {act.progress_variance > 0 ? '+' : ''}{act.progress_variance}%
                         </div>
                       )}
                     </td>
 
-                    <td className="py-3 px-4 text-xs">
-                      <div className="text-text-secondary">
+                    <td className="py-3 px-4 text-xs font-mono">
+                      <div className="text-[#A3A3A3] text-[11px]">
                         P: {act.planned_start ? act.planned_start.slice(0, 10) : '-'} → {act.planned_finish ? act.planned_finish.slice(0, 10) : '-'}
                       </div>
-                      <div className="text-text-primary font-medium mt-0.5">
+                      <div className="text-[#EAEAEA] font-medium mt-0.5">
                         A: {act.actual_start ? act.actual_start.slice(0, 10) : 'Not Started'} → {act.actual_finish ? act.actual_finish.slice(0, 10) : (act.actual_progress > 0 ? 'In Progress' : '-')}
                       </div>
                     </td>
@@ -433,16 +428,16 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
                       <div className="flex flex-col gap-1">
                         {getStatusBadge(act.status)}
                         {act.delay_days !== null && act.delay_days > 0 && (
-                          <span className="text-[10px] text-error font-semibold">
-                            +{act.delay_days}d completion delay
+                          <span className="text-[10px] text-[#EF4444] font-bold font-mono">
+                            +{act.delay_days}d delay
                           </span>
                         )}
                       </div>
                     </td>
 
                     <td className="py-3 px-4 text-center">
-                      <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-semibold ${
-                        act.verified_observations_count > 0 ? 'bg-primary/20 text-primary' : 'bg-muted text-text-secondary'
+                      <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
+                        act.verified_observations_count > 0 ? 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30' : 'bg-[#0A0A0A] text-[#A3A3A3] border border-[#2A2A2A]'
                       }`}>
                         {act.verified_observations_count}
                       </span>
@@ -451,9 +446,10 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
                     <td className="py-3 px-4 text-right">
                       <button
                         onClick={() => handleOpenDetail(act.activity_id)}
-                        className="btn btn-secondary text-xs py-1 px-2.5 font-medium hover:bg-primary hover:text-white transition-colors"
+                        className="btn-secondary text-xs py-1 px-3 font-medium hover:border-[#D4AF37]/60 hover:text-[#D4AF37] transition-all inline-flex items-center gap-1"
                       >
-                        Timeline & Audit →
+                        <span>Timeline & Audit</span>
+                        <ArrowRight className="w-3 h-3" />
                       </button>
                     </td>
                   </tr>
@@ -464,366 +460,19 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
         </div>
       </div>
 
-      {/* Observation History & Audit Drawer */}
-      {drawerOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex justify-end">
-          <div className="w-full max-w-2xl bg-card-bg h-full shadow-2xl flex flex-col border-l border-border animate-slide-left">
-            {/* Drawer Header */}
-            <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-sm font-bold text-primary">
-                    {selectedActivity?.activity_id}
-                  </span>
-                  {selectedActivity && getStatusBadge(selectedActivity.status)}
-                </div>
-                <h3 className="text-base font-semibold text-text-primary mt-1">
-                  {selectedActivity?.activity_name}
-                </h3>
-              </div>
-              <button
-                onClick={() => setDrawerOpen(false)}
-                className="text-text-secondary hover:text-text-primary p-2 text-lg rounded-lg hover:bg-muted"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Drawer Body */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-6">
-              {detailLoading ? (
-                <div className="flex items-center justify-center h-48 text-text-secondary">
-                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <span className="ml-2">Loading observation history...</span>
-                </div>
-              ) : selectedActivity ? (
-                <>
-                  {/* Verified State Summary Card */}
-                  <div className="card p-4 bg-muted/10 border border-border grid grid-cols-3 gap-3 text-center">
-                    <div>
-                      <div className="text-[11px] text-text-secondary uppercase">Verified Progress</div>
-                      <div className="text-xl font-bold text-primary mt-0.5">
-                        {selectedActivity.actual_progress}%
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[11px] text-text-secondary uppercase">Actual Start</div>
-                      <div className="text-sm font-semibold text-text-primary mt-1">
-                        {selectedActivity.actual_start ? selectedActivity.actual_start.slice(0, 10) : 'Not Started'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[11px] text-text-secondary uppercase">Actual Finish</div>
-                      <div className="text-sm font-semibold text-text-primary mt-1">
-                        {selectedActivity.actual_finish ? selectedActivity.actual_finish.slice(0, 10) : 'Active'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Tab Navigation Header */}
-                  <div className="flex border-b border-border gap-2">
-                    <button
-                      onClick={() => setDrawerTab('TIMELINE')}
-                      className={`pb-2 px-3 text-xs font-semibold border-b-2 transition-colors ${
-                        drawerTab === 'TIMELINE'
-                          ? 'border-primary text-primary'
-                          : 'border-transparent text-text-secondary hover:text-text-primary'
-                      }`}
-                    >
-                      📜 Observations ({selectedActivity.observations_history?.length || 0})
-                    </button>
-                    <button
-                      onClick={() => setDrawerTab('DEPENDENCIES')}
-                      className={`pb-2 px-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
-                        drawerTab === 'DEPENDENCIES'
-                          ? 'border-primary text-primary'
-                          : 'border-transparent text-text-secondary hover:text-text-primary'
-                      }`}
-                    >
-                      <span>🔗 Dependency Intelligence</span>
-                      {dependencyDetail && (
-                        <span className="text-[10px] px-1.5 py-0.2 bg-primary/20 text-primary rounded-full">
-                          {(dependencyDetail.upstream_predecessors?.length || 0) + (dependencyDetail.downstream_successors?.length || 0)}
-                        </span>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setDrawerTab('AUDIT')}
-                      className={`pb-2 px-3 text-xs font-semibold border-b-2 transition-colors ${
-                        drawerTab === 'AUDIT'
-                          ? 'border-primary text-primary'
-                          : 'border-transparent text-text-secondary hover:text-text-primary'
-                      }`}
-                    >
-                      🛡️ Audit ({selectedActivity.audit_logs?.length || 0})
-                    </button>
-                  </div>
-
-                  {/* TAB 1: Multi-Observation Timeline */}
-                  {drawerTab === 'TIMELINE' && (
-                    <div>
-                      <h4 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
-                        <span>📜 Field Observations History</span>
-                        <span className="badge badge-primary text-xs">
-                          {selectedActivity.observations_history?.length || 0} Observations
-                        </span>
-                      </h4>
-
-                      {selectedActivity.observations_history?.length === 0 ? (
-                        <div className="text-xs text-text-secondary italic p-4 bg-muted/20 rounded-lg text-center">
-                          No verified field observations mapped to this activity yet.
-                        </div>
-                      ) : (
-                        <div className="relative border-l-2 border-primary/30 ml-4 space-y-4">
-                          {selectedActivity.observations_history.map((obs, idx) => (
-                            <div key={obs.event_id || idx} className="ml-6 relative">
-                              {/* Timeline node icon */}
-                              <span className="absolute -left-[31px] top-1 w-4 h-4 bg-primary rounded-full border-2 border-card-bg" />
-
-                              <div className="card p-3.5 bg-card-bg border border-border hover:border-primary/50 transition-colors shadow-sm">
-                                <div className="flex items-center justify-between text-xs mb-2">
-                                  <span className="font-mono font-bold text-text-primary">
-                                    Observation #{idx + 1} • {obs.source_id || 'DPR'}
-                                  </span>
-                                  <span className="text-text-secondary">
-                                    {obs.approval_timestamp ? obs.approval_timestamp.slice(0, 16).replace('T', ' ') : ''}
-                                  </span>
-                                </div>
-
-                                <div className="flex flex-wrap items-center gap-2 mb-2">
-                                  {getProgressModeBadge(obs.progress_mode)}
-                                  {obs.event_progress !== null && (
-                                    <span className="badge badge-neutral text-xs">
-                                      Event Progress: {obs.event_progress}%
-                                    </span>
-                                  )}
-                                  <span className="badge badge-success text-xs font-semibold">
-                                    Resulting Activity Progress: {obs.resulting_activity_progress}%
-                                  </span>
-                                </div>
-
-                                <div className="text-xs text-text-primary bg-muted/20 p-2.5 rounded border border-border/60 my-2">
-                                  <span className="font-semibold text-text-secondary block text-[10px] uppercase mb-0.5">Raw Field Evidence</span>
-                                  "{obs.raw_text}"
-                                </div>
-
-                                {obs.evidence_text && (
-                                  <div className="text-xs text-primary bg-primary/5 p-2 rounded border border-primary/20 my-1">
-                                    <span className="font-semibold text-text-secondary block text-[10px] uppercase mb-0.5">Grounded Extract Quote</span>
-                                    "{obs.evidence_text}"
-                                  </div>
-                                )}
-
-                                <div className="flex items-center justify-between text-[11px] text-text-secondary mt-2 pt-2 border-t border-border/40">
-                                  <span>Verified by: <strong className="text-text-primary">{obs.reviewer_id}</strong></span>
-                                  {obs.notes && <span>Note: {obs.notes}</span>}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* TAB 2: Dependency Intelligence (Milestone 12) */}
-                  {drawerTab === 'DEPENDENCIES' && (
-                    <div className="space-y-5">
-                      {/* Explicit Non-Predictive Disclaimer */}
-                      <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs text-amber-300">
-                        <strong>Rule-Based Schedule Impact Notice:</strong>
-                        <p className="mt-0.5 text-amber-400/90 text-[11px]">
-                          Deterministic rule-based schedule dependency impact derived strictly from CPM predecessor-successor links. No predictive forecasting claimed.
-                        </p>
-                      </div>
-
-                      {/* Current Activity Delay Status */}
-                      <div className="p-3.5 bg-muted/20 rounded-lg border border-border flex items-center justify-between">
-                        <div>
-                          <div className="text-xs text-text-secondary font-medium uppercase">Current Activity Delay Status</div>
-                          <div className="text-sm font-bold text-text-primary mt-0.5">
-                            {dependencyDetail?.effective_delay_days > 0 ? (
-                              <span className="text-rose-400">Lagging by +{dependencyDetail.effective_delay_days} days</span>
-                            ) : (
-                              <span className="text-emerald-400">On Track (0 days delay)</span>
-                            )}
-                          </div>
-                          {dependencyDetail?.delay_reason && (
-                            <div className="text-[11px] text-text-secondary mt-0.5">
-                              {dependencyDetail.delay_reason}
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-right font-mono text-xs">
-                          <span className="text-text-secondary">Discipline: </span>
-                          <span className="text-primary font-bold">{dependencyDetail?.discipline || 'General'}</span>
-                        </div>
-                      </div>
-
-                      {/* Upstream Predecessors */}
-                      <div className="space-y-2">
-                        <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center justify-between">
-                          <span>⬅️ Upstream Predecessors ({dependencyDetail?.upstream_predecessors?.length || 0})</span>
-                          <span className="text-[10px] text-text-secondary font-normal font-sans">Must finish before this activity</span>
-                        </h4>
-
-                        {(!dependencyDetail?.upstream_predecessors || dependencyDetail.upstream_predecessors.length === 0) ? (
-                          <div className="p-3 bg-muted/10 rounded-lg border border-border text-xs text-text-secondary italic text-center">
-                            No upstream predecessors defined in CPM schedule.
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {dependencyDetail.upstream_predecessors.map((p, idx) => (
-                              <div key={idx} className="p-3 bg-card-bg rounded-lg border border-border text-xs flex flex-col md:flex-row md:items-center justify-between gap-2">
-                                <div className="space-y-0.5">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-mono font-bold text-primary">{p.predecessor_code}</span>
-                                    <span className="text-[10px] px-1.5 py-0.2 bg-muted rounded font-mono text-text-secondary">{p.dependency_type}</span>
-                                    {p.is_predecessor_delayed ? (
-                                      <span className="text-[10px] px-1.5 py-0.2 bg-rose-500/20 text-rose-400 rounded font-semibold">
-                                        Delayed +{p.predecessor_delay_days}d
-                                      </span>
-                                    ) : (
-                                      <span className="text-[10px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 rounded">
-                                        On Schedule
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="text-text-primary font-medium">{p.predecessor_name}</div>
-                                  <div className="text-[11px] text-text-secondary">
-                                    Planned Finish: {p.predecessor_planned_finish || 'N/A'} • Status: {p.predecessor_status || 'Unknown'}
-                                  </div>
-                                </div>
-                                <div className="text-right shrink-0">
-                                  <div className="text-[11px] text-text-secondary">Float Buffer</div>
-                                  <div className="font-mono font-bold text-text-primary">{p.buffer_days_to_this} days</div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Downstream Successors & Potential Impact */}
-                      <div className="space-y-2">
-                        <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center justify-between">
-                          <span>➡️ Downstream Successors Impact ({dependencyDetail?.downstream_successors?.length || 0})</span>
-                          <span className="text-[10px] text-text-secondary font-normal font-sans">Activities waiting on this task</span>
-                        </h4>
-
-                        {(!dependencyDetail?.downstream_successors || dependencyDetail.downstream_successors.length === 0) ? (
-                          <div className="p-3 bg-muted/10 rounded-lg border border-border text-xs text-text-secondary italic text-center">
-                            No downstream successor dependencies mapped to this activity.
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {dependencyDetail.downstream_successors.map((s, idx) => (
-                              <div key={idx} className="p-3 bg-card-bg rounded-lg border border-border text-xs flex flex-col md:flex-row md:items-center justify-between gap-2">
-                                <div className="space-y-0.5">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-mono font-bold text-primary">{s.successor_code}</span>
-                                    <span className="text-[10px] px-1.5 py-0.2 bg-muted rounded font-mono text-text-secondary">{s.dependency_type}</span>
-                                    {getRiskSeverityBadge(s.risk_severity)}
-                                  </div>
-                                  <div className="text-text-primary font-medium">{s.successor_name}</div>
-                                  <div className="text-[11px] text-text-secondary">
-                                    Planned Start: {s.successor_planned_start || 'N/A'} • Discipline: {s.successor_discipline || 'General'}
-                                  </div>
-                                </div>
-                                <div className="text-right shrink-0">
-                                  <div className="text-[11px] text-text-secondary">
-                                    Buffer: <span className="font-mono font-semibold text-text-primary">{s.buffer_days}d</span>
-                                  </div>
-                                  <div className="text-xs font-mono font-bold mt-0.5">
-                                    {s.potential_delay_slippage_days > 0 ? (
-                                      <span className="text-rose-400">+{s.potential_delay_slippage_days}d Slippage</span>
-                                    ) : (
-                                      <span className="text-emerald-400">Buffered (0d)</span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Cascading Impact Chains */}
-                      {dependencyDetail?.cascading_chains && dependencyDetail.cascading_chains.length > 0 && (
-                        <div className="space-y-2">
-                          <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider">
-                            ⛓️ Multi-Tier Cascade Chains ({dependencyDetail.cascading_chains.length})
-                          </h4>
-                          <div className="space-y-2">
-                            {dependencyDetail.cascading_chains.map((chain, cIdx) => (
-                              <div key={cIdx} className="p-3 bg-rose-500/5 rounded-lg border border-rose-500/20 text-xs space-y-1">
-                                <div className="flex items-center justify-between font-mono font-semibold text-text-primary">
-                                  <span>Chain #{cIdx + 1} (Tier {chain.tier})</span>
-                                  {getRiskSeverityBadge(chain.severity)}
-                                </div>
-                                <div className="font-mono text-primary text-[11px] flex items-center gap-1.5 flex-wrap">
-                                  {chain.chain_nodes.map((node, nIdx) => (
-                                    <React.Fragment key={nIdx}>
-                                      <span className="px-1.5 py-0.5 bg-muted rounded">{node}</span>
-                                      {nIdx < chain.chain_nodes.length - 1 && <span>&rarr;</span>}
-                                    </React.Fragment>
-                                  ))}
-                                </div>
-                                <div className="text-[11px] text-text-secondary pt-1 flex justify-between">
-                                  <span>Cum. Slippage: <strong className="text-rose-400 font-mono">+{chain.cumulative_slippage_days}d</strong></span>
-                                  <span>Total Buffer: <strong className="text-text-primary font-mono">{chain.total_buffer_days}d</strong></span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* TAB 3: Audit Trail Lineage */}
-                  {drawerTab === 'AUDIT' && (
-                    <div>
-                      <h4 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
-                        <span>🛡️ Immutable Audit Trail</span>
-                        <span className="badge badge-neutral text-xs">
-                          {selectedActivity.audit_logs?.length || 0} Entries
-                        </span>
-                      </h4>
-
-                      <div className="space-y-2">
-                        {selectedActivity.audit_logs?.map((aud) => (
-                          <div key={aud.id} className="p-2.5 bg-muted/20 border border-border rounded-lg text-xs">
-                            <div className="flex items-center justify-between font-medium text-text-primary">
-                              <span>{aud.action_type}</span>
-                              <span className="text-text-secondary">{aud.timestamp?.slice(0, 19).replace('T', ' ')}</span>
-                            </div>
-                            <div className="text-text-secondary mt-1">
-                              {aud.decision_reason} (by {aud.performed_by})
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : null}
-            </div>
-
-            {/* Drawer Footer */}
-            <div className="p-3 border-t border-border bg-muted/20 flex justify-end">
-              <button
-                onClick={() => setDrawerOpen(false)}
-                className="btn btn-secondary text-xs py-1.5 px-4"
-              >
-                Close Drawer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Observation History & Audit Detail Drawer */}
+      <TimelineAuditDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        activity={selectedActivity}
+        dependencyDetail={dependencyDetail}
+        loading={detailLoading}
+        error={detailError}
+        onRetry={() => selectedActivityId && handleOpenDetail(selectedActivityId)}
+      />
     </div>
   );
 };
 
 export default ExecutionStatePage;
+

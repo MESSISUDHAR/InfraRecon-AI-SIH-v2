@@ -73,7 +73,12 @@ export const deleteExecutionEvent = async (eventId) => {
   return response.data;
 };
 
-// Milestone 4: Gemini Structured Extraction APIs
+// Milestone 4: Extraction Engine APIs
+export const getExecutionStatus = async () => {
+  const response = await api.get('/execution-events/status');
+  return response.data;
+};
+
 export const extractExecutionEvent = async (payload) => {
   const response = await api.post('/execution-events/extract', payload);
   return response.data;

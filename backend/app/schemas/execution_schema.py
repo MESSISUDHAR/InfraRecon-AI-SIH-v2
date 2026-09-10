@@ -74,6 +74,7 @@ class ExecutionExtractionResponse(BaseModel):
     raw_text: str
     extracted_data: ExtractedExecutionData
     event: Optional[ExecutionEventResponse] = None
+    engine: str = Field("heuristic_fallback", description="Engine that performed extraction: 'gemini' | 'heuristic_fallback'")
     model_version: str = "gemini-2.5-flash"
     prompt_version: str = "v1.0"
     execution_time_ms: Optional[float] = None

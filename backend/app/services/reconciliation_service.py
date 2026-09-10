@@ -336,7 +336,7 @@ def reconcile_execution_event(
 
             # Extract facts on the fly if not already extracted
             if not event.activity_description and raw_text:
-                extracted_data, _, _ = extract_execution_event_with_gemini(raw_text, project_id)
+                extracted_data, _, _, _ = extract_execution_event_with_gemini(raw_text, project_id)
                 event.activity_description = extracted_data.activity_description
                 event.discipline = extracted_data.discipline
                 event.location = extracted_data.location
@@ -375,7 +375,7 @@ def reconcile_execution_event(
                 query_text = event.raw_text
 
     if not query_text and raw_text:
-        extracted_data, _, _ = extract_execution_event_with_gemini(raw_text, project_id)
+        extracted_data, _, _, _ = extract_execution_event_with_gemini(raw_text, project_id)
         extracted_facts = extracted_data.model_dump()
         query_text = f"{extracted_data.activity_description or ''} {extracted_data.discipline or ''} {extracted_data.location or ''} {extracted_data.line_id or ''} {extracted_data.asset_id or ''}".strip()
         if not query_text:

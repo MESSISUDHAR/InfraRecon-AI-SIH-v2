@@ -36,36 +36,36 @@ export default function WeightConfigModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="panel-card max-w-xl w-full p-6 space-y-5 bg-slate-900 border-slate-700 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+    <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div className="panel-card max-w-xl w-full p-6 space-y-5 bg-[#111111] border-[#2A2A2A] shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-brand-500/10 text-brand-400">
+            <div className="p-2 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
               <Sliders className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Reconciliation Engine Weights & Policies</h3>
-              <p className="text-xs text-slate-400">Configure multi-signal scoring weights and review thresholds</p>
+              <h3 className="text-sm font-bold text-[#EAEAEA]">Reconciliation Engine Weights & Policies</h3>
+              <p className="text-xs text-[#A3A3A3]">Configure multi-signal scoring weights and review thresholds</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
+          <button onClick={onClose} className="text-[#A3A3A3] hover:text-[#D4AF37] transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Weights Section */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+          <div className="flex items-center justify-between text-xs font-semibold text-[#EAEAEA]">
             <span>Context Signal Weights</span>
-            <span className={`font-mono text-xs ${Math.abs(totalWeight - 1.0) < 0.01 ? 'text-emerald-400' : 'text-rose-400 font-bold'}`}>
+            <span className={`font-mono text-xs ${Math.abs(totalWeight - 1.0) < 0.01 ? 'text-[#10B981]' : 'text-[#EF4444] font-bold'}`}>
               Sum: {(totalWeight * 100).toFixed(0)}% {Math.abs(totalWeight - 1.0) >= 0.01 && '(Must equal 100%)'}
             </span>
           </div>
 
-          <div className="space-y-2.5 text-xs bg-slate-950/60 p-4 rounded-lg border border-slate-800">
+          <div className="space-y-2.5 text-xs bg-[#0A0A0A] p-4 rounded-lg border border-[#2A2A2A]">
             {Object.entries(weights).map(([key, val]) => (
               <div key={key} className="flex items-center justify-between gap-4">
-                <span className="capitalize text-slate-300 w-32">{key} Similarity</span>
+                <span className="capitalize text-[#EAEAEA] w-32">{key} Similarity</span>
                 <input
                   type="range"
                   min="0"
@@ -73,9 +73,9 @@ export default function WeightConfigModal({ isOpen, onClose }) {
                   step="0.05"
                   value={val}
                   onChange={(e) => setWeights({ ...weights, [key]: parseFloat(e.target.value) })}
-                  className="w-full accent-brand-500"
+                  className="w-full accent-[#D4AF37] cursor-pointer"
                 />
-                <span className="font-mono text-slate-200 w-12 text-right">
+                <span className="font-mono text-[#F4D06F] w-12 text-right font-semibold">
                   {(val * 100).toFixed(0)}%
                 </span>
               </div>
@@ -85,10 +85,10 @@ export default function WeightConfigModal({ isOpen, onClose }) {
 
         {/* Confidence Thresholds */}
         <div className="space-y-3">
-          <span className="text-xs font-semibold text-slate-300">Routing Policy Thresholds</span>
+          <span className="text-xs font-semibold text-[#EAEAEA]">Routing Policy Thresholds</span>
           <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="bg-slate-950/60 p-3 rounded-lg border border-slate-800 space-y-1.5">
-              <label className="text-slate-400">High Confidence (Auto-Process)</label>
+            <div className="bg-[#0A0A0A] p-3 rounded-lg border border-[#2A2A2A] space-y-1.5">
+              <label className="text-[#A3A3A3]">High Confidence (Auto-Process)</label>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
@@ -97,14 +97,14 @@ export default function WeightConfigModal({ isOpen, onClose }) {
                   max="1.0"
                   value={thresholds.high}
                   onChange={(e) => setThresholds({ ...thresholds, high: parseFloat(e.target.value) })}
-                  className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-emerald-400 font-mono"
+                  className="w-full bg-[#1A1A1A] border border-[#2A2A2A] focus:border-[#D4AF37] outline-none rounded px-2 py-1 text-xs text-[#10B981] font-mono font-semibold"
                 />
-                <span className="text-slate-500 font-mono">(&ge; {(thresholds.high * 100).toFixed(0)}%)</span>
+                <span className="text-[#A3A3A3] font-mono">(&ge; {(thresholds.high * 100).toFixed(0)}%)</span>
               </div>
             </div>
 
-            <div className="bg-slate-950/60 p-3 rounded-lg border border-slate-800 space-y-1.5">
-              <label className="text-slate-400">Medium Confidence (Planner Review)</label>
+            <div className="bg-[#0A0A0A] p-3 rounded-lg border border-[#2A2A2A] space-y-1.5">
+              <label className="text-[#A3A3A3]">Medium Confidence (Planner Review)</label>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
@@ -113,16 +113,16 @@ export default function WeightConfigModal({ isOpen, onClose }) {
                   max="0.9"
                   value={thresholds.medium}
                   onChange={(e) => setThresholds({ ...thresholds, medium: parseFloat(e.target.value) })}
-                  className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-amber-400 font-mono"
+                  className="w-full bg-[#1A1A1A] border border-[#2A2A2A] focus:border-[#D4AF37] outline-none rounded px-2 py-1 text-xs text-[#F59E0B] font-mono font-semibold"
                 />
-                <span className="text-slate-500 font-mono">(&ge; {(thresholds.medium * 100).toFixed(0)}%)</span>
+                <span className="text-[#A3A3A3] font-mono">(&ge; {(thresholds.medium * 100).toFixed(0)}%)</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+        <div className="flex items-center justify-between pt-2 border-t border-[#2A2A2A]">
           <button 
             onClick={resetDefaults}
             className="btn-outline text-xs"

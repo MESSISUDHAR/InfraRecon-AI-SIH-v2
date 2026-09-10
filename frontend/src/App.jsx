@@ -19,6 +19,27 @@ export default function App() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [demoNotice, setDemoNotice] = useState(null);
   const [projectsList, setProjectsList] = useState([]);
+  
+  // Theme State (Dark / Light) with Persistence
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('infra_theme') || 'dark';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'light') {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    } else {
+      root.classList.remove('light');
+      root.classList.add('dark');
+    }
+    localStorage.setItem('infra_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
 
   // Active Project Context
   const [activeProject, setActiveProject] = useState({
@@ -95,9 +116,11 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-950 text-slate-100">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0A0A0A] text-[#EAEAEA]">
       {/* Top Navigation */}
       <Navbar
+        theme={theme}
+        onToggleTheme={toggleTheme}
         systemStatus={systemStatus}
         activeProject={activeProject}
         projectsList={projectsList}
@@ -116,11 +139,14 @@ export default function App() {
         />
 
         {/* Dynamic Page Container */}
-        <main className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-900/40 to-slate-950/80">
+        <main className="flex-1 overflow-y-auto bg-[#0A0A0A] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(212,175,55,0.04),rgba(10,10,10,0))]">
           {demoNotice && (
-            <div className="bg-brand-950/80 border-b border-brand-700/50 px-6 py-2.5 text-xs text-brand-300 flex items-center justify-between">
-              <span>✨ {demoNotice}</span>
-              <button onClick={() => setDemoNotice(null)} className="text-slate-400 hover:text-white">✕</button>
+            <div className="bg-[#1A1A1A] border-b border-[#D4AF37]/30 px-6 py-2.5 text-xs text-[#F4D06F] flex items-center justify-between shadow-sm">
+              <span className="flex items-center gap-2">
+                <span className="text-[#D4AF37]">✨</span>
+                <span>{demoNotice}</span>
+              </span>
+              <button onClick={() => setDemoNotice(null)} className="text-[#A3A3A3] hover:text-[#D4AF37] transition-colors">✕</button>
             </div>
           )}
           {renderContent()}

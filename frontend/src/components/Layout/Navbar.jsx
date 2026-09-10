@@ -7,10 +7,15 @@ import {
   Sparkles, 
   CheckCircle2, 
   AlertCircle,
-  Clock
+  Clock,
+  Sun,
+  Moon,
+  Shield
 } from 'lucide-react';
 
 export default function Navbar({ 
+  theme = 'dark',
+  onToggleTheme,
   systemStatus, 
   activeProject, 
   projectsList = [],
@@ -19,31 +24,31 @@ export default function Navbar({
   onLoadDemo 
 }) {
   return (
-    <header className="h-16 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md px-6 flex items-center justify-between z-30 sticky top-0">
+    <header className="h-16 border-b border-[#2A2A2A] bg-[#111111] backdrop-blur-md px-6 flex items-center justify-between z-30 sticky top-0">
       {/* Brand & Project Context */}
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-cyan-500 p-0.5 flex items-center justify-center shadow-lg shadow-brand-500/20">
-            <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-              <Layers className="w-5 h-5 text-brand-400" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#D4AF37] to-[#F4D06F] p-0.5 flex items-center justify-center shadow-lg shadow-[#D4AF37]/15">
+            <div className="w-full h-full bg-[#0A0A0A] rounded-[10px] flex items-center justify-center">
+              <Layers className="w-5 h-5 text-[#D4AF37]" />
             </div>
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-base tracking-tight text-white">InfraRecon <span className="text-brand-400">AI</span></span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 bg-brand-950 text-brand-400 border border-brand-800/60 rounded">
+              <span className="font-bold text-base tracking-tight text-[#EAEAEA]">InfraRecon <span className="text-[#D4AF37]">AI</span></span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 rounded">
                 SIH 2026 • PS 26122
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-medium">Planning-to-Execution Intelligence Bridge</p>
+            <p className="text-[11px] text-[#A3A3A3] font-medium">Planning-to-Execution Intelligence</p>
           </div>
         </div>
 
-        <div className="h-6 w-px bg-slate-800 hidden md:block" />
+        <div className="h-6 w-px bg-[#2A2A2A] hidden md:block" />
 
         {/* Active Project & Version Indicator */}
-        <div className="hidden lg:flex items-center gap-2.5 bg-slate-800/80 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs">
-          <Building2 className="w-3.5 h-3.5 text-brand-400" />
+        <div className="hidden lg:flex items-center gap-2.5 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-3 py-1.5 text-xs">
+          <Building2 className="w-3.5 h-3.5 text-[#D4AF37]" />
           {projectsList && projectsList.length > 0 ? (
             <select
               value={activeProject?.id}
@@ -53,19 +58,19 @@ export default function Navbar({
                   onSelectProject(found);
                 }
               }}
-              className="bg-transparent text-slate-200 font-semibold text-xs focus:outline-none cursor-pointer"
+              className="bg-transparent text-[#EAEAEA] font-semibold text-xs focus:outline-none cursor-pointer"
             >
               {projectsList.map((p) => (
-                <option key={p.id} value={p.id} className="bg-slate-900 text-slate-200">
+                <option key={p.id} value={p.id} className="bg-[#111111] text-[#EAEAEA]">
                   {p.code || p.id} • {p.name}
                 </option>
               ))}
             </select>
           ) : (
-            <span className="text-slate-300 font-medium">{activeProject?.name || "Refinery Expansion Package 4"}</span>
+            <span className="text-[#EAEAEA] font-medium">{activeProject?.name || "Refinery Expansion Package 4"}</span>
           )}
-          <span className="text-slate-500">•</span>
-          <span className="text-brand-400 font-mono text-[11px] bg-brand-950/60 border border-brand-800/40 px-1.5 py-0.2 rounded">
+          <span className="text-[#A3A3A3]">•</span>
+          <span className="text-[#D4AF37] font-mono text-[11px] bg-[#D4AF37]/10 border border-[#D4AF37]/30 px-1.5 py-0.5 rounded font-semibold">
             {activeProject?.active_schedule_version || "v1.0"}
           </span>
         </div>
@@ -73,34 +78,54 @@ export default function Navbar({
 
       {/* Right Controls: Data Date, Health, Actions */}
       <div className="flex items-center gap-4">
-        <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 bg-slate-950/50 border border-slate-800 px-3 py-1.5 rounded-lg">
-          <Clock className="w-3.5 h-3.5 text-brand-400" />
-          <span>Data Date: <strong className="text-slate-200 font-medium">06-Sep-2026</strong></span>
+        <div className="hidden sm:flex items-center gap-2 text-xs text-[#A3A3A3] bg-[#1A1A1A] border border-[#2A2A2A] px-3 py-1.5 rounded-lg">
+          <Clock className="w-3.5 h-3.5 text-[#D4AF37]" />
+          <span>Data Date: <strong className="text-[#EAEAEA] font-medium">06-Sep-2026</strong></span>
         </div>
 
         {/* Backend Health Pill */}
-        <div className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border bg-slate-950/80 border-slate-800">
+        <div className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border bg-[#0A0A0A] border-[#2A2A2A]">
           {systemStatus?.database_connected ? (
             <>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-emerald-400 font-medium">Backend Live</span>
+              <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
+              <span className="text-[#10B981] font-semibold">Backend Live</span>
             </>
           ) : (
             <>
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              <span className="text-amber-400 font-medium">Connecting...</span>
+              <span className="w-2 h-2 rounded-full bg-[#F59E0B] animate-pulse" />
+              <span className="text-[#F59E0B] font-semibold">Connecting...</span>
             </>
           )}
         </div>
 
         {/* Quick Demo Loader & Config Modals */}
         <div className="flex items-center gap-2">
+          {/* Theme Toggle Button */}
+          <button
+            onClick={onToggleTheme}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 border-[#2A2A2A] bg-[#1A1A1A] hover:bg-[#222222] hover:border-[#D4AF37]/50 text-[#EAEAEA] shadow-sm"
+            title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            id="theme-toggle-button"
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun className="w-3.5 h-3.5 text-[#F4D06F]" />
+                <span>Light</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Dark</span>
+              </>
+            )}
+          </button>
+
           <button 
             onClick={onLoadDemo}
-            className="btn-outline border-brand-700/60 hover:border-brand-500 bg-brand-950/40 text-brand-300 hover:text-white"
+            className="btn-outline border-[#D4AF37]/40 hover:border-[#D4AF37] bg-[#D4AF37]/5 text-[#F4D06F] hover:text-[#FFD700]"
             title="Load realistic demo test scenarios"
           >
-            <Sparkles className="w-3.5 h-3.5 text-brand-400" />
+            <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
             <span className="hidden md:inline">Demo Scenarios</span>
           </button>
 
@@ -109,7 +134,7 @@ export default function Navbar({
             className="btn-secondary text-xs py-1.5 px-3"
             title="Configure Reconciliation Weights & Confidence Thresholds"
           >
-            <Sliders className="w-3.5 h-3.5 text-slate-300" />
+            <Sliders className="w-3.5 h-3.5 text-[#D4AF37]" />
             <span className="hidden md:inline">Weights & Rules</span>
           </button>
         </div>

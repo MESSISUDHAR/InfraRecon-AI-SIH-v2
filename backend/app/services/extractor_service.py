@@ -142,11 +142,11 @@ def extract_execution_event_with_gemini(
     raw_text: str,
     project_id: Optional[str] = None,
     source_id: Optional[str] = None
-) -> Tuple[ExtractedExecutionData, float, list[str]]:
+) -> Tuple[ExtractedExecutionData, float, list[str], str]:
     """
     Calls Gemini 2.5 Flash through the backend to perform grounded structured extraction.
     Validates output with Pydantic ExtractedExecutionData.
-    Returns (ExtractedExecutionData, execution_time_ms, warnings).
+    Returns (ExtractedExecutionData, execution_time_ms, warnings, engine).
     """
     start_time = time.time()
     warnings = []
@@ -159,7 +159,7 @@ def extract_execution_event_with_gemini(
         warnings.append("GEMINI_API_KEY is not set. Used local grounded extraction fallback.")
         extracted_data = heuristic_fallback_extractor(raw_text)
         elapsed_ms = round((time.time() - start_time) * 1000, 2)
-        return extracted_data, elapsed_ms, warnings
+        return extracted_data, elapsed_ms, warnings, "heuristic_fallback"
 
     # 2. Prepare Gemini 2.5 Flash API Payload
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
@@ -200,7 +200,7 @@ Extract the structured ExecutionEvent adhering strictly to the system instructio
             warnings.append(f"Gemini API error ({response.status_code}). Used grounded fallback extraction.")
             extracted_data = heuristic_fallback_extractor(raw_text)
             elapsed_ms = round((time.time() - start_time) * 1000, 2)
-            return extracted_data, elapsed_ms, warnings
+            return extracted_data, elapsed_ms, warnings, "heuristic_fallback"
 
         response_json = response.json()
         
@@ -230,25 +230,25 @@ Extract the structured ExecutionEvent adhering strictly to the system instructio
         # Validate with Pydantic
         extracted_data = ExtractedExecutionData.model_validate(parsed_dict)
         elapsed_ms = round((time.time() - start_time) * 1000, 2)
-        return extracted_data, elapsed_ms, warnings
+        return extracted_data, elapsed_ms, warnings, "gemini"
 
     except (httpx.TimeoutException, httpx.ConnectError) as e:
         logger.warning(f"Network error calling Gemini: {str(e)}")
         warnings.append(f"Gemini API timeout or network error. Used grounded fallback extraction.")
         extracted_data = heuristic_fallback_extractor(raw_text)
         elapsed_ms = round((time.time() - start_time) * 1000, 2)
-        return extracted_data, elapsed_ms, warnings
+        return extracted_data, elapsed_ms, warnings, "heuristic_fallback"
 
     except (json.JSONDecodeError, ValidationError, ValueError) as e:
         logger.warning(f"Gemini output parsing/validation error: {str(e)}")
         warnings.append(f"Gemini JSON validation issue ({str(e)}). Used grounded fallback extraction.")
         extracted_data = heuristic_fallback_extractor(raw_text)
         elapsed_ms = round((time.time() - start_time) * 1000, 2)
-        return extracted_data, elapsed_ms, warnings
+        return extracted_data, elapsed_ms, warnings, "heuristic_fallback"
 
     except Exception as e:
         logger.error(f"Unexpected error in Gemini extraction: {str(e)}")
         warnings.append(f"Unexpected extraction error ({str(e)}). Used grounded fallback extraction.")
         extracted_data = heuristic_fallback_extractor(raw_text)
         elapsed_ms = round((time.time() - start_time) * 1000, 2)
-        return extracted_data, elapsed_ms, warnings
+        return extracted_data, elapsed_ms, warnings, "heuristic_fallback"

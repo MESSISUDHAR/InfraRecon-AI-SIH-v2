@@ -23,7 +23,8 @@ import {
   Clock,
   Sliders,
   ChevronRight,
-  Filter
+  Filter,
+  Award
 } from 'lucide-react';
 import { 
   getReviewQueue,
@@ -205,32 +206,38 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-              <UserCheck className="w-6 h-6 text-brand-400" />
-              <span>Human-in-the-Loop Planner Review Gate</span>
-            </h1>
-            <span className="text-xs font-semibold px-2.5 py-0.5 bg-brand-500/10 text-brand-400 border border-brand-500/20 rounded-full font-mono">
-              Milestone 8
-            </span>
+            <div className="p-2.5 bg-[#111111] border border-[#D4AF37]/30 rounded-xl shadow-[0_0_15px_rgba(212,175,55,0.15)]">
+              <UserCheck className="w-6 h-6 text-[#D4AF37]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-black text-[#EAEAEA] tracking-tight">
+                  Human-in-the-Loop Planner Review Gate
+                </h1>
+                <span className="text-[10px] font-bold px-2 py-0.5 bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 rounded-full font-mono">
+                  GATEWAY
+                </span>
+              </div>
+              <p className="text-xs text-[#A3A3A3] mt-0.5">
+                Confidence policy guardrails & human oversight before updating verified schedule progress.
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-slate-400 mt-1">
-            Enforces confidence policy guardrails. Planners review evidence, resolve ambiguities, override or approve matches before state updates.
-          </p>
         </div>
 
         <div className="flex items-center gap-3">
           <button 
             onClick={handleAutoProcess}
             disabled={actionLoading || queueData.high_confidence_count === 0}
-            className="btn-primary text-xs flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-emerald-600/20"
+            className="btn-primary text-xs flex items-center gap-2 py-2 px-4 shadow-[0_0_15px_rgba(212,175,55,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Zap className="w-3.5 h-3.5" />
+            <Zap className="w-3.5 h-3.5 text-[#0A0A0A]" />
             <span>Auto-Process Eligible ({queueData.high_confidence_count})</span>
           </button>
           {onNavigate && (
             <button 
               onClick={() => onNavigate('execution-state')}
-              className="btn-outline text-xs flex items-center gap-1.5"
+              className="btn-outline text-xs flex items-center gap-1.5 py-2 px-3.5"
             >
               <span>Verified Execution State</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -240,14 +247,14 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
       </div>
 
       {/* Confidence Policy Filter Tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2A2A2A] pb-3">
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setTierFilter('ALL')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
               tierFilter === 'ALL' 
-                ? 'bg-slate-800 text-white border border-slate-700' 
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#D4AF37] text-[#0A0A0A] shadow-[0_0_12px_rgba(212,175,55,0.3)]' 
+                : 'bg-[#111111] text-[#A3A3A3] border border-[#2A2A2A] hover:text-[#EAEAEA]'
             }`}
           >
             All Pending ({queueData.pending_count})
@@ -255,58 +262,64 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
 
           <button 
             onClick={() => setTierFilter('HIGH')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               tierFilter === 'HIGH' 
-                ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40' 
-                : 'text-slate-400 hover:text-emerald-300'
+                ? 'bg-[#10B981] text-[#0A0A0A] shadow-[0_0_12px_rgba(16,185,129,0.3)]' 
+                : 'bg-[#111111] text-[#A3A3A3] border border-[#2A2A2A] hover:text-[#10B981]'
             }`}
           >
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <ShieldCheck className="w-3.5 h-3.5" />
             <span>High Conf (≥85%)</span>
-            <span className="px-1.5 py-0.2 bg-emerald-900/60 rounded text-[10px] font-mono">
+            <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${
+              tierFilter === 'HIGH' ? 'bg-[#0A0A0A]/30 text-[#0A0A0A]' : 'bg-[#10B981]/20 text-[#10B981]'
+            }`}>
               {queueData.high_confidence_count}
             </span>
           </button>
 
           <button 
             onClick={() => setTierFilter('MEDIUM')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               tierFilter === 'MEDIUM' 
-                ? 'bg-amber-950/80 text-amber-300 border border-amber-500/40' 
-                : 'text-slate-400 hover:text-amber-300'
+                ? 'bg-[#F59E0B] text-[#0A0A0A] shadow-[0_0_12px_rgba(245,158,11,0.3)]' 
+                : 'bg-[#111111] text-[#A3A3A3] border border-[#2A2A2A] hover:text-[#F59E0B]'
             }`}
           >
-            <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+            <AlertCircle className="w-3.5 h-3.5" />
             <span>Medium Conf (60-84%)</span>
-            <span className="px-1.5 py-0.2 bg-amber-900/60 rounded text-[10px] font-mono">
+            <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${
+              tierFilter === 'MEDIUM' ? 'bg-[#0A0A0A]/30 text-[#0A0A0A]' : 'bg-[#F59E0B]/20 text-[#F59E0B]'
+            }`}>
               {queueData.medium_confidence_count}
             </span>
           </button>
 
           <button 
             onClick={() => setTierFilter('LOW')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               tierFilter === 'LOW' 
-                ? 'bg-rose-950/80 text-rose-300 border border-rose-500/40' 
-                : 'text-slate-400 hover:text-rose-300'
+                ? 'bg-[#EF4444] text-[#0A0A0A] shadow-[0_0_12px_rgba(239,68,68,0.3)]' 
+                : 'bg-[#111111] text-[#A3A3A3] border border-[#2A2A2A] hover:text-[#EF4444]'
             }`}
           >
-            <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+            <AlertTriangle className="w-3.5 h-3.5" />
             <span>Low Conf (&lt;60%)</span>
-            <span className="px-1.5 py-0.2 bg-rose-900/60 rounded text-[10px] font-mono">
+            <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${
+              tierFilter === 'LOW' ? 'bg-[#0A0A0A]/30 text-[#0A0A0A]' : 'bg-[#EF4444]/20 text-[#EF4444]'
+            }`}>
               {queueData.low_confidence_count}
             </span>
           </button>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+          <div className="flex items-center gap-1.5 text-xs text-[#A3A3A3] bg-[#111111] px-3 py-1.5 rounded-xl border border-[#2A2A2A]">
             <span>Project:</span>
             {projectsList.length > 0 ? (
               <select
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
-                className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white font-mono text-xs focus:outline-none focus:border-brand-500"
+                className="bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-2 py-0.5 text-[#EAEAEA] font-mono text-xs focus:outline-none focus:border-[#D4AF37]"
               >
                 {projectsList.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -315,16 +328,16 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
                 ))}
               </select>
             ) : (
-              <span className="font-mono text-white font-bold">{projectId}</span>
+              <span className="font-mono text-[#D4AF37] font-bold">{projectId}</span>
             )}
           </div>
 
           <button 
             onClick={loadQueue}
             disabled={loading}
-            className="text-xs text-slate-400 hover:text-white flex items-center gap-1 bg-slate-900 px-2.5 py-1 rounded border border-slate-800"
+            className="text-xs text-[#A3A3A3] hover:text-[#EAEAEA] flex items-center gap-1.5 bg-[#111111] px-3 py-1.5 rounded-xl border border-[#2A2A2A] transition-colors"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-[#D4AF37] ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
         </div>
@@ -332,14 +345,14 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
 
       {/* Notifications */}
       {error && (
-        <div className="bg-rose-950/30 border border-rose-500/30 rounded-xl p-4 flex items-center gap-3 text-rose-300 text-sm">
+        <div className="bg-[#EF4444]/10 border border-[#EF4444]/30 rounded-xl p-4 flex items-center gap-3 text-[#EF4444] text-sm">
           <AlertCircle className="w-5 h-5 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {successMsg && (
-        <div className="bg-emerald-950/30 border border-emerald-500/30 rounded-xl p-4 flex items-center gap-3 text-emerald-300 text-sm">
+        <div className="bg-[#10B981]/10 border border-[#10B981]/30 rounded-xl p-4 flex items-center gap-3 text-[#10B981] text-sm">
           <CheckCircle2 className="w-5 h-5 shrink-0" />
           <span>{successMsg}</span>
         </div>
@@ -347,45 +360,49 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
 
       {/* Queue Items or Empty State */}
       {queueData.items.length === 0 ? (
-        <div className="panel-card p-12 text-center text-slate-400 space-y-3">
-          <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
-          <h3 className="text-base font-bold text-white">Review Queue Clean</h3>
-          <p className="text-xs text-slate-400 max-w-md mx-auto">
+        <div className="panel-card p-12 text-center text-[#A3A3A3] space-y-3">
+          <div className="p-3 bg-[#10B981]/10 rounded-2xl w-fit mx-auto border border-[#10B981]/20">
+            <CheckCircle2 className="w-10 h-10 text-[#10B981]" />
+          </div>
+          <h3 className="text-base font-bold text-[#EAEAEA]">Review Queue Clean</h3>
+          <p className="text-xs text-[#A3A3A3] max-w-md mx-auto">
             No execution events are currently pending planner review under the selected filter. Submit a field report on the Field Reports page to generate new review items.
           </p>
           {onNavigate && (
             <button 
               onClick={() => onNavigate('field-reports')}
-              className="btn-primary text-xs mt-2"
+              className="btn-primary text-xs mt-2 py-2 px-4 inline-flex items-center gap-2"
             >
-              Submit New Field Report →
+              <span>Submit New Field Report</span>
+              <ArrowRight className="w-3.5 h-3.5 text-[#0A0A0A]" />
             </button>
           )}
         </div>
       ) : (
         <div className="space-y-6">
           {/* Active Review Item Selector Ribbon */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
-            {queueData.items.map((it, idx) => (
+          <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
+            {queueData.items.map((it) => (
               <div 
                 key={it.event_id}
                 onClick={() => handleSelectEvent(it)}
-                className={`p-3 rounded-lg border text-xs cursor-pointer transition-all shrink-0 min-w-[220px] ${
+                className={`p-3.5 rounded-xl border text-xs cursor-pointer transition-all shrink-0 min-w-[240px] ${
                   selectedEventId === it.event_id 
-                    ? 'bg-slate-800/90 border-brand-500 ring-1 ring-brand-500' 
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+                    ? 'bg-[#111111] border-[#D4AF37] ring-1 ring-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.15)]' 
+                    : 'bg-[#111111] border-[#2A2A2A] hover:border-[#D4AF37]/40'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-mono font-bold text-slate-200">{it.event_id}</span>
-                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                    it.confidence_tier === 'HIGH' ? 'bg-emerald-950 text-emerald-400' :
-                    it.confidence_tier === 'MEDIUM' ? 'bg-amber-950 text-amber-400' : 'bg-rose-950 text-rose-400'
+                  <span className="font-mono font-bold text-[#D4AF37]">{it.event_id}</span>
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                    it.confidence_tier === 'HIGH' ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30' :
+                    it.confidence_tier === 'MEDIUM' ? 'bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30' :
+                    'bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/30'
                   }`}>
                     {Math.round(it.final_confidence * 100)}% ({it.confidence_tier})
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-400 mt-1 truncate">
+                <div className="text-[11px] text-[#A3A3A3] mt-1.5 truncate font-medium">
                   {it.extracted_facts?.activity_description || it.raw_text}
                 </div>
               </div>
@@ -395,36 +412,36 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
           {/* Active Item Context Alert */}
           {currentItem && (
             <div className={`p-4 rounded-xl border flex items-center justify-between gap-4 ${
-              currentItem.confidence_tier === 'HIGH' ? 'bg-emerald-950/20 border-emerald-500/30' :
-              currentItem.confidence_tier === 'MEDIUM' ? 'bg-amber-950/20 border-amber-500/30' :
-              'bg-rose-950/20 border-rose-500/30'
+              currentItem.confidence_tier === 'HIGH' ? 'bg-[#10B981]/10 border-[#10B981]/30' :
+              currentItem.confidence_tier === 'MEDIUM' ? 'bg-[#F59E0B]/10 border-[#F59E0B]/30' :
+              'bg-[#EF4444]/10 border-[#EF4444]/30'
             }`}>
               <div className="flex items-center gap-3">
                 {currentItem.confidence_tier === 'HIGH' ? (
-                  <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <ShieldCheck className="w-5 h-5 text-[#10B981] shrink-0" />
                 ) : currentItem.confidence_tier === 'MEDIUM' ? (
-                  <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
+                  <AlertCircle className="w-5 h-5 text-[#F59E0B] shrink-0" />
                 ) : (
-                  <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                  <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0" />
                 )}
                 <div className="text-xs">
                   <strong className={
-                    currentItem.confidence_tier === 'HIGH' ? 'text-emerald-300' :
-                    currentItem.confidence_tier === 'MEDIUM' ? 'text-amber-300' : 'text-rose-300'
+                    currentItem.confidence_tier === 'HIGH' ? 'text-[#10B981]' :
+                    currentItem.confidence_tier === 'MEDIUM' ? 'text-[#F59E0B]' : 'text-[#EF4444]'
                   }>
                     {currentItem.confidence_tier === 'HIGH' ? 'High Confidence (Auto-Eligible): ' :
                      currentItem.confidence_tier === 'MEDIUM' ? 'Planner Review Required: ' : 'Low Confidence / Risk Alert: '}
                   </strong>
-                  <span className="text-slate-300">
+                  <span className="text-[#EAEAEA]">
                     {currentItem.reconciliation_reason || 'Reconciliation engine evaluated context signals.'}
                   </span>
                 </div>
               </div>
 
-              <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded border shrink-0 ${
-                currentItem.confidence_tier === 'HIGH' ? 'bg-emerald-950 text-emerald-400 border-emerald-700' :
-                currentItem.confidence_tier === 'MEDIUM' ? 'bg-amber-950 text-amber-400 border-amber-700' :
-                'bg-rose-950 text-rose-400 border-rose-700'
+              <span className={`text-xs font-mono font-bold px-3 py-1.5 rounded-lg border shrink-0 ${
+                currentItem.confidence_tier === 'HIGH' ? 'bg-[#10B981]/20 text-[#10B981] border-[#10B981]/40' :
+                currentItem.confidence_tier === 'MEDIUM' ? 'bg-[#F59E0B]/20 text-[#F59E0B] border-[#F59E0B]/40' :
+                'bg-[#EF4444]/20 text-[#EF4444] border-[#EF4444]/40'
               }`}>
                 Confidence: {(currentItem.final_confidence * 100).toFixed(1)}%
               </span>
@@ -435,126 +452,127 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
           {currentItem && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Pane 1: Original Raw Field Evidence */}
-              <div className="panel-card p-5 space-y-4 border-t-2 border-t-brand-500 flex flex-col justify-between">
+              <div className="panel-card p-5 space-y-4 border-t-2 border-t-[#D4AF37] flex flex-col justify-between">
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-brand-400" />
+                  <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-2.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#EAEAEA] flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-[#D4AF37]" />
                       <span>1. Original Raw Evidence</span>
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono">
+                    <span className="text-[10px] text-[#A3A3A3] font-mono bg-[#0A0A0A] px-2 py-0.5 rounded border border-[#2A2A2A]">
                       {currentItem.source_id || 'DIRECT_INPUT'}
                     </span>
                   </div>
 
-                  <div className="p-3 bg-slate-950/70 border border-slate-800 rounded-lg text-xs font-mono text-slate-200 leading-relaxed">
+                  <div className="p-3.5 bg-[#0A0A0A] border border-[#2A2A2A] rounded-xl text-xs font-sans text-[#EAEAEA] leading-relaxed italic">
                     "{currentItem.raw_text}"
                   </div>
 
-                  <div className="space-y-1 text-xs text-slate-400">
-                    <div className="flex justify-between py-1 border-b border-slate-800/40">
+                  <div className="space-y-1.5 text-xs text-[#A3A3A3]">
+                    <div className="flex justify-between py-1 border-b border-[#2A2A2A]">
                       <span>Source Reference:</span>
-                      <span className="text-slate-200 font-medium">{currentItem.source_type || 'Field Report'}</span>
+                      <span className="text-[#EAEAEA] font-medium">{currentItem.source_type || 'Field Report'}</span>
                     </div>
-                    <div className="flex justify-between py-1 border-b border-slate-800/40">
+                    <div className="flex justify-between py-1 border-b border-[#2A2A2A]">
                       <span>Reporter Name:</span>
-                      <span className="text-slate-200">{currentItem.reporter_name || 'Supervisor'}</span>
+                      <span className="text-[#EAEAEA]">{currentItem.reporter_name || 'Supervisor'}</span>
                     </div>
                     <div className="flex justify-between py-1">
                       <span>Report Date:</span>
-                      <span className="text-slate-200">{currentItem.report_date?.split('T')[0] || 'Today'}</span>
+                      <span className="text-[#EAEAEA]">{currentItem.report_date?.split('T')[0] || 'Today'}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="text-[11px] text-slate-500 bg-slate-950/40 p-2.5 rounded border border-slate-800/50">
+                <div className="text-[11px] text-[#A3A3A3] bg-[#0A0A0A] p-2.5 rounded-lg border border-[#2A2A2A]">
                   🔒 Raw field evidence is preserved verbatim and immutable.
                 </div>
               </div>
 
               {/* Pane 2: Extracted ExecutionEvent (Fact Grounding) */}
-              <div className="panel-card p-5 space-y-4 border-t-2 border-t-cyan-500 flex flex-col justify-between">
+              <div className="panel-card p-5 space-y-4 border-t-2 border-t-[#3B82F6] flex flex-col justify-between">
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                      <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+                  <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-2.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#EAEAEA] flex items-center gap-1.5">
+                      <Cpu className="w-3.5 h-3.5 text-[#3B82F6]" />
                       <span>2. AI Fact Grounding</span>
                     </span>
-                    <span className="badge-high">
+                    <span className="text-[10px] font-bold px-2 py-0.5 bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 rounded">
                       Conf: {currentItem.extracted_facts?.extraction_confidence ? `${Math.round(currentItem.extracted_facts.extraction_confidence * 100)}%` : '95%'}
                     </span>
                   </div>
 
-                  <div className="space-y-2 text-xs font-mono bg-slate-950/70 p-3 rounded-lg border border-slate-800">
-                    <div className="flex justify-between py-1 border-b border-slate-800/60">
-                      <span className="text-slate-400">Activity Fact:</span>
-                      <span className="text-cyan-300 font-semibold truncate max-w-[160px]">
+                  <div className="space-y-2 text-xs bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A]">
+                    <div className="flex justify-between py-1 border-b border-[#2A2A2A]">
+                      <span className="text-[#A3A3A3]">Activity Fact:</span>
+                      <span className="text-[#3B82F6] font-semibold truncate max-w-[170px]">
                         {currentItem.extracted_facts?.activity_description || 'Unspecified'}
                       </span>
                     </div>
-                    <div className="flex justify-between py-1 border-b border-slate-800/60">
-                      <span className="text-slate-400">Discipline:</span>
-                      <span className="text-white">{currentItem.extracted_facts?.discipline || 'General'}</span>
+                    <div className="flex justify-between py-1 border-b border-[#2A2A2A]">
+                      <span className="text-[#A3A3A3]">Discipline:</span>
+                      <span className="text-[#EAEAEA] font-medium">{currentItem.extracted_facts?.discipline || 'General'}</span>
                     </div>
-                    <div className="flex justify-between py-1 border-b border-slate-800/60">
-                      <span className="text-slate-400">Location:</span>
-                      <span className="text-emerald-300">{currentItem.extracted_facts?.location || 'Unassigned'}</span>
+                    <div className="flex justify-between py-1 border-b border-[#2A2A2A]">
+                      <span className="text-[#A3A3A3]">Location:</span>
+                      <span className="text-[#10B981] font-medium">{currentItem.extracted_facts?.location || 'Unassigned'}</span>
                     </div>
-                    <div className="flex justify-between py-1 border-b border-slate-800/60">
-                      <span className="text-slate-400">Line / Asset:</span>
-                      <span className="text-amber-300">{currentItem.extracted_facts?.line_id || currentItem.extracted_facts?.asset_id || 'null (absent)'}</span>
+                    <div className="flex justify-between py-1 border-b border-[#2A2A2A]">
+                      <span className="text-[#A3A3A3]">Line / Asset:</span>
+                      <span className="text-[#D4AF37] font-mono">{currentItem.extracted_facts?.line_id || currentItem.extracted_facts?.asset_id || 'null (absent)'}</span>
                     </div>
                     <div className="flex justify-between py-1">
-                      <span className="text-slate-400">Event Type:</span>
-                      <span className="text-purple-300">{currentItem.extracted_facts?.event_type || 'progress'} ({currentItem.extracted_facts?.progress || 100}%)</span>
+                      <span className="text-[#A3A3A3]">Event Type:</span>
+                      <span className="text-[#A855F7] font-medium">{currentItem.extracted_facts?.event_type || 'progress'} ({currentItem.extracted_facts?.progress || 100}%)</span>
                     </div>
                   </div>
 
                   {currentItem.extracted_facts?.evidence_text && (
-                    <div className="text-[11px] text-slate-400">
-                      Grounded Quote: <em className="text-slate-300">"{currentItem.extracted_facts.evidence_text}"</em>
+                    <div className="text-[11px] text-[#A3A3A3]">
+                      Grounded Quote: <em className="text-[#EAEAEA]">"{currentItem.extracted_facts.evidence_text}"</em>
                     </div>
                   )}
                 </div>
 
-                <div className="text-[11px] text-slate-500 bg-slate-950/40 p-2.5 rounded border border-slate-800/50">
+                <div className="text-[11px] text-[#A3A3A3] bg-[#0A0A0A] p-2.5 rounded-lg border border-[#2A2A2A]">
                   Grounded strictly by Gemini 2.5 Flash without hallucinations.
                 </div>
               </div>
 
               {/* Pane 3: Candidate Schedule Activities & Review Decisions */}
-              <div className="panel-card p-5 space-y-4 border-t-2 border-t-amber-500 flex flex-col justify-between">
+              <div className="panel-card p-5 space-y-4 border-t-2 border-t-[#D4AF37] flex flex-col justify-between">
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5 text-amber-400" />
+                  <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-2.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#EAEAEA] flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-[#D4AF37]" />
                       <span>3. Candidate Activities</span>
                     </span>
-                    <span className="text-[10px] text-slate-500">Select target</span>
+                    <span className="text-[10px] text-[#A3A3A3]">Select target activity</span>
                   </div>
 
                   {/* Top Candidate */}
                   {currentItem.top_candidate && (
                     <div 
                       onClick={() => setSelectedCandidateId(currentItem.top_candidate.id)}
-                      className={`p-3 rounded-lg border text-xs cursor-pointer transition-all ${
+                      className={`p-3 rounded-xl border text-xs cursor-pointer transition-all ${
                         selectedCandidateId === currentItem.top_candidate.id || (!selectedCandidateId)
-                          ? 'bg-brand-950/60 border-brand-500 shadow-md ring-1 ring-brand-500/50'
-                          : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+                          ? 'bg-[#111111] border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.15)] ring-1 ring-[#D4AF37]'
+                          : 'bg-[#0A0A0A] border-[#2A2A2A] hover:border-[#D4AF37]/40'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-mono font-bold text-brand-400">
+                        <span className="font-mono font-bold text-[#D4AF37] flex items-center gap-1">
+                          <Award className="w-3.5 h-3.5" />
                           {currentItem.top_candidate.activity_id} (Rank #1)
                         </span>
-                        <span className="font-mono text-emerald-400 font-bold text-[11px]">
+                        <span className="font-mono text-[#10B981] font-bold text-[11px]">
                           Score: {(currentItem.top_candidate.final_confidence * 100).toFixed(1)}%
                         </span>
                       </div>
-                      <div className="text-white font-medium mt-1">
+                      <div className="text-[#EAEAEA] font-bold mt-1">
                         {currentItem.top_candidate.activity_name}
                       </div>
-                      <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-2">
+                      <div className="text-[10px] text-[#A3A3A3] mt-1 flex items-center gap-2">
                         <span>Disc: {currentItem.top_candidate.discipline || 'N/A'}</span>
                         <span>•</span>
                         <span>Loc: {currentItem.top_candidate.location || 'N/A'}</span>
@@ -567,21 +585,21 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
                     <div 
                       key={alt.id || alt.activity_id}
                       onClick={() => setSelectedCandidateId(alt.id)}
-                      className={`p-2.5 rounded-lg border text-xs cursor-pointer transition-all ${
+                      className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
                         selectedCandidateId === alt.id
-                          ? 'bg-brand-950/60 border-brand-500 shadow-md ring-1 ring-brand-500/50'
-                          : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+                          ? 'bg-[#111111] border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.15)] ring-1 ring-[#D4AF37]'
+                          : 'bg-[#0A0A0A] border-[#2A2A2A] hover:border-[#D4AF37]/40'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-mono font-bold text-slate-300">
+                        <span className="font-mono font-bold text-[#A3A3A3]">
                           {alt.activity_id} (Rank #{alt.rank})
                         </span>
-                        <span className="font-mono text-slate-400 font-bold text-[11px]">
+                        <span className="font-mono text-[#A3A3A3] font-bold text-[11px]">
                           Score: {(alt.final_confidence * 100).toFixed(1)}%
                         </span>
                       </div>
-                      <div className="text-slate-300 font-medium mt-0.5 truncate">
+                      <div className="text-[#EAEAEA] font-medium mt-0.5 truncate">
                         {alt.activity_name}
                       </div>
                     </div>
@@ -589,7 +607,7 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
 
                   {/* Conflicting Signals Warning if present */}
                   {currentItem.conflicting_signals?.length > 0 && (
-                    <div className="p-2.5 bg-rose-950/30 border border-rose-500/30 rounded text-[11px] text-rose-300">
+                    <div className="p-3 bg-[#EF4444]/10 border border-[#EF4444]/30 rounded-xl text-[11px] text-[#EF4444]">
                       <strong>Risk Warning: </strong>
                       {currentItem.conflicting_signals.join('; ')}
                     </div>
@@ -602,27 +620,27 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
                       value={plannerNotes}
                       onChange={(e) => setPlannerNotes(e.target.value)}
                       placeholder="Optional planner remarks..."
-                      className="w-full bg-slate-950 text-xs text-slate-200 border border-slate-800 rounded p-2 focus:outline-none focus:border-brand-500"
+                      className="w-full bg-[#0A0A0A] text-xs text-[#EAEAEA] border border-[#2A2A2A] rounded-xl p-2.5 focus:outline-none focus:border-[#D4AF37]"
                     />
                   </div>
                 </div>
 
                 {/* Review Actions */}
-                <div className="space-y-2 pt-2 border-t border-slate-800">
+                <div className="space-y-2 pt-2 border-t border-[#2A2A2A]">
                   <div className="flex items-center gap-2">
                     <button 
                       onClick={handleApprove}
                       disabled={actionLoading}
-                      className="btn-primary text-xs flex-1 bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20 py-2 flex items-center justify-center gap-1.5"
+                      className="btn-primary text-xs flex-1 py-2 px-3 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.25)]"
                     >
-                      <Check className="w-3.5 h-3.5" />
+                      <Check className="w-3.5 h-3.5 text-[#0A0A0A]" />
                       <span>{selectedCandidateId && currentItem.top_candidate && selectedCandidateId !== currentItem.top_candidate.id ? 'Override & Approve' : 'Approve Match'}</span>
                     </button>
 
                     <button 
                       onClick={handleReject}
                       disabled={actionLoading}
-                      className="btn-secondary text-xs px-3 py-2 text-rose-400 hover:bg-rose-950/30 border-rose-800/40 flex items-center gap-1"
+                      className="btn-secondary text-xs px-3.5 py-2 text-[#EF4444] hover:bg-[#EF4444]/15 border-[#EF4444]/40 flex items-center gap-1.5 transition-colors"
                     >
                       <X className="w-3.5 h-3.5" />
                       <span>Reject</span>
@@ -637,3 +655,4 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
     </div>
   );
 }
+

@@ -21,16 +21,23 @@ from app.schemas.execution_schema import (
     ExecutionEventSubmitResponse,
     ExecutionEventBatchUploadResponse
 )
+from app.config import settings
 from app.services.extractor_service import extract_execution_event_with_gemini
 
 router = APIRouter(prefix="/execution-events", tags=["Execution Events"])
 
 @router.get("/status")
 def execution_status():
+    has_key = bool(settings.GEMINI_API_KEY.strip())
     return ApiResponse(
         success=True,
-        message="Execution events extraction service operational (Gemini 2.5 Flash Layer).",
-        data={"milestone": 4, "model": "gemini-2.5-flash"}
+        message="Execution events extraction service operational.",
+        data={
+            "milestone": 4,
+            "model": settings.GEMINI_MODEL or "gemini-2.5-flash",
+            "gemini_configured": has_key,
+            "default_engine": "gemini" if has_key else "heuristic_fallback"
+        }
     )
 
 def ensure_project_exists(db: Session, project_id: str, project_name: Optional[str] = None) -> Project:
@@ -101,8 +108,8 @@ def extract_execution_facts(
     Validates output with Pydantic ExtractedExecutionData schema.
     Strictly isolated: does NOT select schedule activities and does NOT modify verified execution state.
     """
-    # 1. Run Gemini 2.5 Flash structured extraction
-    extracted_data, elapsed_ms, warnings = extract_execution_event_with_gemini(
+    # 1. Run structured extraction (Gemini live if key configured, otherwise grounded heuristic fallback)
+    extracted_data, elapsed_ms, warnings, engine = extract_execution_event_with_gemini(
         raw_text=payload.raw_text,
         project_id=payload.project_id,
         source_id=payload.source_id
@@ -136,7 +143,7 @@ def extract_execution_facts(
             existing_event.extraction_confidence = extracted_data.extraction_confidence
             existing_event.embedding_json = embedding_str
             existing_event.status = "EXTRACTED"
-            existing_event.model_version = "gemini-2.5-flash"
+            existing_event.model_version = "gemini-2.5-flash" if engine == "gemini" else "heuristic_fallback"
             existing_event.prompt_version = "v1.0"
             db.commit()
             db.refresh(existing_event)
@@ -169,7 +176,7 @@ def extract_execution_facts(
             extraction_confidence=extracted_data.extraction_confidence,
             embedding_json=embedding_str,
             status="EXTRACTED",
-            model_version="gemini-2.5-flash",
+            model_version="gemini-2.5-flash" if engine == "gemini" else "heuristic_fallback",
             prompt_version="v1.0",
             ingestion_timestamp=now_utc
         )
@@ -178,13 +185,16 @@ def extract_execution_facts(
         db.refresh(new_event)
         event_record = ExecutionEventResponse.model_validate(new_event)
 
+    msg = "Structured ExecutionEvent successfully extracted via Gemini 2.5 Flash Live." if engine == "gemini" else "Structured ExecutionEvent extracted via Grounded Local Fallback."
+
     return ExecutionExtractionResponse(
         success=True,
-        message="Structured ExecutionEvent successfully extracted via Gemini 2.5 Flash Layer.",
+        message=msg,
         raw_text=payload.raw_text,
         extracted_data=extracted_data,
         event=event_record,
-        model_version="gemini-2.5-flash",
+        engine=engine,
+        model_version="gemini-2.5-flash" if engine == "gemini" else "heuristic_fallback",
         prompt_version="v1.0",
         execution_time_ms=elapsed_ms,
         warnings=warnings
@@ -196,13 +206,13 @@ def extract_event_by_id(
     db: Session = Depends(get_db)
 ):
     """
-    Extracts structured facts for an already ingested ExecutionEvent using Gemini 2.5 Flash.
+    Extracts structured facts for an already ingested ExecutionEvent.
     """
     event = db.query(ExecutionEvent).filter(ExecutionEvent.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Execution event not found.")
 
-    extracted_data, elapsed_ms, warnings = extract_execution_event_with_gemini(
+    extracted_data, elapsed_ms, warnings, engine = extract_execution_event_with_gemini(
         raw_text=event.raw_text,
         project_id=event.project_id,
         source_id=event.source_id
@@ -227,19 +237,22 @@ def extract_event_by_id(
     event.extraction_confidence = extracted_data.extraction_confidence
     event.embedding_json = json.dumps(event_embedding)
     event.status = "EXTRACTED"
-    event.model_version = "gemini-2.5-flash"
+    event.model_version = "gemini-2.5-flash" if engine == "gemini" else "heuristic_fallback"
     event.prompt_version = "v1.0"
     
     db.commit()
     db.refresh(event)
 
+    msg = f"Event {event.source_id or event_id} extracted successfully via Gemini 2.5 Flash Live." if engine == "gemini" else f"Event {event.source_id or event_id} extracted successfully via Grounded Local Fallback."
+
     return ExecutionExtractionResponse(
         success=True,
-        message=f"Event {event.source_id or event_id} extracted successfully.",
+        message=msg,
         raw_text=event.raw_text,
         extracted_data=extracted_data,
         event=ExecutionEventResponse.model_validate(event),
-        model_version="gemini-2.5-flash",
+        engine=engine,
+        model_version="gemini-2.5-flash" if engine == "gemini" else "heuristic_fallback",
         prompt_version="v1.0",
         execution_time_ms=elapsed_ms,
         warnings=warnings
