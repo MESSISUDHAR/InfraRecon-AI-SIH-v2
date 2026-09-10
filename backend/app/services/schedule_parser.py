@@ -364,11 +364,15 @@ def parse_schedule_file(
     # Milestone 5: Dynamically batch generate SentenceTransformers embeddings for all activities
     try:
         import json
+        import gc
         from app.services.embedding_service import generate_embeddings_batch
         searchable_texts = [a["searchable_text"] for a in activities]
-        embeddings = generate_embeddings_batch(searchable_texts)
+        embeddings = generate_embeddings_batch(searchable_texts, chunk_size=16)
         for act, emb in zip(activities, embeddings):
             act["embedding_json"] = json.dumps(emb)
+        del searchable_texts
+        del embeddings
+        gc.collect()
     except Exception as e:
         warnings.append(f"Embedding generation warning: {str(e)}")
 

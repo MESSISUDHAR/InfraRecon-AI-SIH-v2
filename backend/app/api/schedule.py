@@ -86,6 +86,12 @@ async def upload_schedule(
         Activity.schedule_version == schedule_version
     ).delete(synchronize_session=False)
 
+    existing_state_act_ids = {
+        row[0] for row in db.query(ExecutionState.activity_id).filter(
+            ExecutionState.project_id == project_id
+        ).all()
+    }
+
     new_activities = []
     new_states = []
 
@@ -94,12 +100,7 @@ async def upload_schedule(
         new_activities.append(activity)
 
         # Check if ExecutionState already exists for this activity, else initialize
-        existing_state = db.query(ExecutionState).filter(
-            ExecutionState.project_id == project_id,
-            ExecutionState.activity_id == activity.id
-        ).first()
-
-        if not existing_state:
+        if activity.id not in existing_state_act_ids:
             state = ExecutionState(
                 id=f"state_{activity.id}",
                 project_id=project_id,
@@ -333,11 +334,16 @@ def generate_all_activity_embeddings(
             data={"count": 0}
         )
 
+    import gc
     texts = [a.searchable_text or f"{a.activity_name} {a.discipline or ''} {a.location or ''}" for a in activities]
-    embeddings = generate_embeddings_batch(texts)
+    embeddings = generate_embeddings_batch(texts, chunk_size=16)
     
     for act, emb in zip(activities, embeddings):
         act.embedding_json = json.dumps(emb)
+
+    del texts
+    del embeddings
+    gc.collect()
 
     db.commit()
 

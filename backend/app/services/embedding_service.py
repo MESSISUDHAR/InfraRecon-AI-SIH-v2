@@ -15,22 +15,53 @@ logger = logging.getLogger("embedding_service")
 
 # Global singleton cache for the SentenceTransformer model
 _model_instance = None
+_torch_configured = False
 EMBEDDING_DIM = 384
+
+def _configure_torch_env():
+    """
+    Safely configure PyTorch runtime for CPU-only, low-memory inference on 512 MB instances.
+    Prevents thread multiplication and unnecessary memory allocations.
+    """
+    global _torch_configured
+    if not _torch_configured:
+        try:
+            import torch
+            # Limit PyTorch CPU thread count to 1 to eliminate multi-thread memory overhead on multi-core host nodes
+            torch.set_num_threads(1)
+            try:
+                torch.set_num_interop_threads(1)
+            except Exception:
+                pass
+            # Disable autograd gradients for pure inference workload
+            torch.set_grad_enabled(False)
+            _torch_configured = True
+        except Exception as e:
+            logger.debug(f"Could not configure torch environment: {e}")
 
 def get_sentence_transformer_model():
     """
-    Lazy loader for SentenceTransformer model.
-    Caches the instance in memory for fast repeated inference.
+    Lazy loader for SentenceTransformer model with CPU memory optimization.
+    Caches the single instance in memory for fast repeated inference without
+    allocating unnecessary threads or autograd graphs.
     """
     global _model_instance
     if _model_instance is not None:
         return _model_instance
 
+    _configure_torch_env()
+
     try:
+        import torch
         from sentence_transformers import SentenceTransformer
         model_name = settings.EMBEDDING_MODEL_NAME or "all-MiniLM-L6-v2"
-        logger.info(f"Loading SentenceTransformer model: {model_name}...")
-        _model_instance = SentenceTransformer(model_name)
+        logger.info(f"Loading SentenceTransformer model ({model_name}) on CPU (memory-optimized)...")
+        
+        with torch.inference_mode():
+            model = SentenceTransformer(model_name, device="cpu")
+            model.eval()
+        
+        _model_instance = model
         logger.info("SentenceTransformer model loaded successfully.")
         return _model_instance
     except Exception as e:
@@ -87,6 +118,7 @@ def generate_embedding(text: str) -> List[float]:
     """
     Generates a 384-dimensional dense embedding vector for a given text.
     L2-normalized for fast dot-product cosine similarity.
+    Uses torch.inference_mode() and converts directly to numpy floats.
     """
     if not text or not text.strip():
         return [0.0] * EMBEDDING_DIM
@@ -94,7 +126,14 @@ def generate_embedding(text: str) -> List[float]:
     model = get_sentence_transformer_model()
     if model is not None:
         try:
-            emb = model.encode(text.strip(), normalize_embeddings=True)
+            import torch
+            with torch.inference_mode():
+                emb = model.encode(
+                    text.strip(),
+                    normalize_embeddings=True,
+                    convert_to_numpy=True,
+                    show_progress_bar=False
+                )
             return [round(float(x), 6) for x in emb]
         except Exception as e:
             logger.warning(f"Error encoding with SentenceTransformer: {str(e)}. Using fallback.")
@@ -102,9 +141,10 @@ def generate_embedding(text: str) -> List[float]:
     
     return _dense_fallback_embedding(text)
 
-def generate_embeddings_batch(texts: List[str]) -> List[List[float]]:
+def generate_embeddings_batch(texts: List[str], chunk_size: int = 16) -> List[List[float]]:
     """
-    Batch generation of 384-dimensional embeddings for a list of texts.
+    Batch generation of 384-dimensional embeddings for a list of texts in small,
+    memory-efficient chunks to maintain low resident memory on 512 MB instances.
     """
     if not texts:
         return []
@@ -112,13 +152,31 @@ def generate_embeddings_batch(texts: List[str]) -> List[List[float]]:
     model = get_sentence_transformer_model()
     if model is not None:
         try:
-            embeddings = model.encode(
-                [t.strip() if t and t.strip() else " " for t in texts],
-                batch_size=32,
-                show_progress_bar=False,
-                normalize_embeddings=True
-            )
-            return [[round(float(x), 6) for x in emb] for emb in embeddings]
+            import torch
+            import gc
+            results: List[List[float]] = []
+            clean_texts = [t.strip() if t and t.strip() else " " for t in texts]
+            
+            # Process in small chunks to prevent peak memory spikes
+            for i in range(0, len(clean_texts), chunk_size):
+                chunk = clean_texts[i:i + chunk_size]
+                with torch.inference_mode():
+                    chunk_embs = model.encode(
+                        chunk,
+                        batch_size=len(chunk),
+                        show_progress_bar=False,
+                        normalize_embeddings=True,
+                        convert_to_numpy=True
+                    )
+                for emb in chunk_embs:
+                    results.append([round(float(x), 6) for x in emb])
+                del chunk_embs
+
+            # Perform garbage collection after processing substantial batches
+            if len(texts) >= 30:
+                gc.collect()
+
+            return results
         except Exception as e:
             logger.warning(f"Error batch encoding with SentenceTransformer: {str(e)}. Using fallback.")
             return [_dense_fallback_embedding(t) for t in texts]

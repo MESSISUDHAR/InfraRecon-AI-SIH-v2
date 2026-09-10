@@ -1,0 +1,121 @@
+Activity ID,Activity Name,WBS Code,WBS Name,Level,Discipline,Location,Asset ID,Line ID,Planned Start,Planned Finish,Duration,Planned %,Predecessors
+PIP-L5-001,Install 6-inch spool at Area PR-01,1.3.4.1,Process Area Piping,L5,Piping,Area PR-01,PR-04,6-XX,2026-09-03,2026-09-06,3,20,
+PIP-L5-002,Hydrotest Line 8-XX,1.3.4.2,Hydrotesting & NDT,L5,Piping,Area PR-02,PR-04,8-XX,2026-09-05,2026-09-09,4,75,PIP-L5-001
+PIP-L5-003,Erect pipe rack supports at Area PR-03,1.3.4.3,Pipe Rack Structural,L5,Piping,Area PR-03,PR-02,12-XX,2026-09-07,2026-09-12,5,0,PIP-L5-002
+PIP-L5-004,Tie-in weld at Flare Header 18-XX,1.3.4.4,Flare Line Tie-ins,L5,Piping,Area PR-04,FL-101,18-XX,2026-09-09,2026-09-15,6,50,PIP-L5-003
+PIP-L5-005,Install 24-inch spool at Compressor Bay 1,1.3.4.1,Process Area Piping,L5,Piping,Compressor Bay 1,PR-04,24-XX,2026-09-11,2026-09-18,7,100,PIP-L5-004
+PIP-L5-006,Hydrotest Line 30-XX,1.3.4.2,Hydrotesting & NDT,L5,Piping,Compressor Bay 2,PR-04,30-XX,2026-09-13,2026-09-21,8,20,PIP-L5-005
+PIP-L5-007,Erect pipe rack supports at Substation Yard,1.3.4.3,Pipe Rack Structural,L5,Piping,Substation Yard,PR-02,6-XX,2026-09-15,2026-09-24,9,75,PIP-L5-006
+PIP-L5-008,Tie-in weld at Flare Header 8-XX,1.3.4.4,Flare Line Tie-ins,L5,Piping,Flare Yard,FL-101,8-XX,2026-09-17,2026-09-27,10,0,PIP-L5-007
+PIP-L5-009,Install 12-inch spool at Tank Farm 1,1.3.4.1,Process Area Piping,L5,Piping,Tank Farm 1,PR-04,12-XX,2026-09-19,2026-09-22,3,50,PIP-L5-008
+PIP-L5-010,Hydrotest Line 18-XX,1.3.4.2,Hydrotesting & NDT,L5,Piping,Switchgear L2,PR-04,18-XX,2026-09-21,2026-09-25,4,100,PIP-L5-009
+PIP-L5-011,Erect pipe rack supports at Area PR-01,1.3.4.3,Pipe Rack Structural,L5,Piping,Area PR-01,PR-02,24-XX,2026-09-23,2026-09-28,5,20,PIP-L5-010
+PIP-L5-012,Tie-in weld at Flare Header 30-XX,1.3.4.4,Flare Line Tie-ins,L5,Piping,Area PR-02,FL-101,30-XX,2026-09-25,2026-10-01,6,75,PIP-L5-011
+PIP-L5-013,Install 6-inch spool at Area PR-03,1.3.4.1,Process Area Piping,L5,Piping,Area PR-03,PR-04,6-XX,2026-09-27,2026-10-04,7,0,PIP-L5-012
+PIP-L5-014,Hydrotest Line 8-XX,1.3.4.2,Hydrotesting & NDT,L5,Piping,Area PR-04,PR-04,8-XX,2026-09-29,2026-10-07,8,50,PIP-L5-013
+PIP-L5-015,Erect pipe rack supports at Compressor Bay 1,1.3.4.3,Pipe Rack Structural,L5,Piping,Compressor Bay 1,PR-02,12-XX,2026-10-01,2026-10-10,9,100,PIP-L5-014
+PIP-L5-016,Tie-in weld at Flare Header 18-XX,1.3.4.4,Flare Line Tie-ins,L5,Piping,Compressor Bay 2,FL-101,18-XX,2026-10-03,2026-10-13,10,20,PIP-L5-015
+PIP-L5-017,Install 24-inch spool at Substation Yard,1.3.4.1,Process Area Piping,L5,Piping,Substation Yard,PR-04,24-XX,2026-10-05,2026-10-08,3,75,PIP-L5-016
+PIP-L5-018,Hydrotest Line 30-XX,1.3.4.2,Hydrotesting & NDT,L5,Piping,Flare Yard,PR-04,30-XX,2026-10-07,2026-10-11,4,0,PIP-L5-017
+PIP-L5-019,Erect pipe rack supports at Tank Farm 1,1.3.4.3,Pipe Rack Structural,L5,Piping,Tank Farm 1,PR-02,6-XX,2026-10-09,2026-10-14,5,50,PIP-L5-018
+PIP-L5-020,Tie-in weld at Flare Header 8-XX,1.3.4.4,Flare Line Tie-ins,L5,Piping,Switchgear L2,FL-101,8-XX,2026-10-11,2026-10-17,6,100,PIP-L5-019
+CIV-L5-021,Pour Foundation Slab for CIV-100,1.2.1.1,Equipment Foundations,L5,Civil,Area PR-04,CIV-100,6-XX,2026-10-13,2026-10-16,3,20,
+CIV-L5-022,Install storm water drainage at Compressor Bay 1,1.2.3.2,Underground Drainage,L5,Civil,Compressor Bay 1,CIV-101,DRN-500,2026-10-15,2026-10-19,4,75,CIV-L5-021
+CIV-L5-023,Grouting for Static Vessel Foundations CIV-102,1.2.1.3,Vessel Foundations,L5,Civil,Compressor Bay 2,CIV-102,12-XX,2026-09-02,2026-09-07,5,0,CIV-L5-022
+CIV-L5-024,Erect precast boundary wall at Substation Yard,1.2.4.1,Site Infrastructure,L5,Civil,Substation Yard,CIV-103,18-XX,2026-09-04,2026-09-10,6,50,CIV-L5-023
+CIV-L5-025,Pour Foundation Slab for CIV-104,1.2.1.1,Equipment Foundations,L5,Civil,Flare Yard,CIV-104,24-XX,2026-09-06,2026-09-13,7,100,CIV-L5-024
+CIV-L5-026,Install storm water drainage at Tank Farm 1,1.2.3.2,Underground Drainage,L5,Civil,Tank Farm 1,CIV-105,DRN-500,2026-09-08,2026-09-16,8,20,CIV-L5-025
+CIV-L5-027,Grouting for Static Vessel Foundations CIV-106,1.2.1.3,Vessel Foundations,L5,Civil,Switchgear L2,CIV-106,6-XX,2026-09-10,2026-09-19,9,75,CIV-L5-026
+CIV-L5-028,Erect precast boundary wall at Area PR-01,1.2.4.1,Site Infrastructure,L5,Civil,Area PR-01,CIV-107,8-XX,2026-09-12,2026-09-22,10,0,CIV-L5-027
+CIV-L5-029,Pour Foundation Slab for CIV-108,1.2.1.1,Equipment Foundations,L5,Civil,Area PR-02,CIV-108,12-XX,2026-09-14,2026-09-17,3,50,CIV-L5-028
+CIV-L5-030,Install storm water drainage at Area PR-03,1.2.3.2,Underground Drainage,L5,Civil,Area PR-03,CIV-109,DRN-500,2026-09-16,2026-09-20,4,100,CIV-L5-029
+CIV-L5-031,Grouting for Static Vessel Foundations CIV-110,1.2.1.3,Vessel Foundations,L5,Civil,Area PR-04,CIV-110,24-XX,2026-09-18,2026-09-23,5,20,CIV-L5-030
+CIV-L5-032,Erect precast boundary wall at Compressor Bay 1,1.2.4.1,Site Infrastructure,L5,Civil,Compressor Bay 1,CIV-111,30-XX,2026-09-20,2026-09-26,6,75,CIV-L5-031
+CIV-L5-033,Pour Foundation Slab for CIV-112,1.2.1.1,Equipment Foundations,L5,Civil,Compressor Bay 2,CIV-112,6-XX,2026-09-22,2026-09-29,7,0,CIV-L5-032
+CIV-L5-034,Install storm water drainage at Substation Yard,1.2.3.2,Underground Drainage,L5,Civil,Substation Yard,CIV-113,DRN-500,2026-09-24,2026-10-02,8,50,CIV-L5-033
+CIV-L5-035,Grouting for Static Vessel Foundations CIV-114,1.2.1.3,Vessel Foundations,L5,Civil,Flare Yard,CIV-114,12-XX,2026-09-26,2026-10-05,9,100,CIV-L5-034
+CIV-L5-036,Erect precast boundary wall at Tank Farm 1,1.2.4.1,Site Infrastructure,L5,Civil,Tank Farm 1,CIV-115,18-XX,2026-09-28,2026-10-08,10,20,CIV-L5-035
+CIV-L5-037,Pour Foundation Slab for CIV-116,1.2.1.1,Equipment Foundations,L5,Civil,Switchgear L2,CIV-116,24-XX,2026-09-30,2026-10-03,3,75,CIV-L5-036
+CIV-L5-038,Install storm water drainage at Area PR-01,1.2.3.2,Underground Drainage,L5,Civil,Area PR-01,CIV-117,DRN-500,2026-10-02,2026-10-06,4,0,CIV-L5-037
+CIV-L5-039,Grouting for Static Vessel Foundations CIV-118,1.2.1.3,Vessel Foundations,L5,Civil,Area PR-02,CIV-118,6-XX,2026-10-04,2026-10-09,5,50,CIV-L5-038
+CIV-L5-040,Erect precast boundary wall at Area PR-03,1.2.4.1,Site Infrastructure,L5,Civil,Area PR-03,CIV-119,8-XX,2026-10-06,2026-10-12,6,100,CIV-L5-039
+ELE-L5-041,Install Cable Trays at Substation Yard,1.4.1.2,Substation Cable Containment,L5,Electrical,Substation Yard,ELE-100,6-XX,2026-10-08,2026-10-11,3,20,
+ELE-L5-042,Pull HV Power Feeder Cable to ELE-101,1.4.2.1,High Voltage Cabling,L5,Electrical,Flare Yard,ELE-101,8-XX,2026-10-10,2026-10-14,4,75,ELE-L5-041
+ELE-L5-043,Terminate Control Cables at Tank Farm 1,1.4.2.2,Control Cabling,L5,Electrical,Tank Farm 1,ELE-102,12-XX,2026-10-12,2026-10-17,5,0,ELE-L5-042
+ELE-L5-044,Energization testing of Transformer ELE-103,1.4.3.1,Substation Commissioning,L5,Electrical,Switchgear L2,ELE-103,18-XX,2026-10-14,2026-10-20,6,50,ELE-L5-043
+ELE-L5-045,Install Cable Trays at Area PR-01,1.4.1.2,Substation Cable Containment,L5,Electrical,Area PR-01,ELE-104,24-XX,2026-09-01,2026-09-08,7,100,ELE-L5-044
+ELE-L5-046,Pull HV Power Feeder Cable to ELE-105,1.4.2.1,High Voltage Cabling,L5,Electrical,Area PR-02,ELE-105,30-XX,2026-09-03,2026-09-11,8,20,ELE-L5-045
+ELE-L5-047,Terminate Control Cables at Area PR-03,1.4.2.2,Control Cabling,L5,Electrical,Area PR-03,ELE-106,6-XX,2026-09-05,2026-09-14,9,75,ELE-L5-046
+ELE-L5-048,Energization testing of Transformer ELE-107,1.4.3.1,Substation Commissioning,L5,Electrical,Area PR-04,ELE-107,8-XX,2026-09-07,2026-09-17,10,0,ELE-L5-047
+ELE-L5-049,Install Cable Trays at Compressor Bay 1,1.4.1.2,Substation Cable Containment,L5,Electrical,Compressor Bay 1,ELE-108,12-XX,2026-09-09,2026-09-12,3,50,ELE-L5-048
+ELE-L5-050,Pull HV Power Feeder Cable to ELE-109,1.4.2.1,High Voltage Cabling,L5,Electrical,Compressor Bay 2,ELE-109,18-XX,2026-09-11,2026-09-15,4,100,ELE-L5-049
+ELE-L5-051,Terminate Control Cables at Substation Yard,1.4.2.2,Control Cabling,L5,Electrical,Substation Yard,ELE-110,24-XX,2026-09-13,2026-09-18,5,20,ELE-L5-050
+ELE-L5-052,Energization testing of Transformer ELE-111,1.4.3.1,Substation Commissioning,L5,Electrical,Flare Yard,ELE-111,30-XX,2026-09-15,2026-09-21,6,75,ELE-L5-051
+ELE-L5-053,Install Cable Trays at Tank Farm 1,1.4.1.2,Substation Cable Containment,L5,Electrical,Tank Farm 1,ELE-112,6-XX,2026-09-17,2026-09-24,7,0,ELE-L5-052
+ELE-L5-054,Pull HV Power Feeder Cable to ELE-113,1.4.2.1,High Voltage Cabling,L5,Electrical,Switchgear L2,ELE-113,8-XX,2026-09-19,2026-09-27,8,50,ELE-L5-053
+ELE-L5-055,Terminate Control Cables at Area PR-01,1.4.2.2,Control Cabling,L5,Electrical,Area PR-01,ELE-114,12-XX,2026-09-21,2026-09-30,9,100,ELE-L5-054
+ELE-L5-056,Energization testing of Transformer ELE-115,1.4.3.1,Substation Commissioning,L5,Electrical,Area PR-02,ELE-115,18-XX,2026-09-23,2026-10-03,10,20,ELE-L5-055
+ELE-L5-057,Install Cable Trays at Area PR-03,1.4.1.2,Substation Cable Containment,L5,Electrical,Area PR-03,ELE-116,24-XX,2026-09-25,2026-09-28,3,75,ELE-L5-056
+ELE-L5-058,Pull HV Power Feeder Cable to ELE-117,1.4.2.1,High Voltage Cabling,L5,Electrical,Area PR-04,ELE-117,30-XX,2026-09-27,2026-10-01,4,0,ELE-L5-057
+ELE-L5-059,Terminate Control Cables at Compressor Bay 1,1.4.2.2,Control Cabling,L5,Electrical,Compressor Bay 1,ELE-118,6-XX,2026-09-29,2026-10-04,5,50,ELE-L5-058
+ELE-L5-060,Energization testing of Transformer ELE-119,1.4.3.1,Substation Commissioning,L5,Electrical,Compressor Bay 2,ELE-119,8-XX,2026-10-01,2026-10-07,6,100,ELE-L5-059
+MEC-L5-061,Erect Main Column MEC-100 Section,1.5.1.1,Major Static Columns,L5,Mechanical,Switchgear L2,MEC-100,6-XX,2026-10-03,2026-10-06,3,20,
+MEC-L5-062,Align Compressor Drive Shaft MEC-101,1.5.2.2,Rotating Equipment Alignment,L5,Mechanical,Area PR-01,MEC-101,8-XX,2026-10-05,2026-10-09,4,75,MEC-L5-061
+MEC-L5-063,Install Heat Exchanger MEC-102,1.5.1.3,Heat Exchangers Erection,L5,Mechanical,Area PR-02,MEC-102,12-XX,2026-10-07,2026-10-12,5,0,MEC-L5-062
+MEC-L5-064,Coupling inspection for Pump MEC-103,1.5.2.4,Rotating Equipment Commissioning,L5,Mechanical,Area PR-03,MEC-103,18-XX,2026-10-09,2026-10-15,6,50,MEC-L5-063
+MEC-L5-065,Erect Main Column MEC-104 Section,1.5.1.1,Major Static Columns,L5,Mechanical,Area PR-04,MEC-104,24-XX,2026-10-11,2026-10-18,7,100,MEC-L5-064
+MEC-L5-066,Align Compressor Drive Shaft MEC-105,1.5.2.2,Rotating Equipment Alignment,L5,Mechanical,Compressor Bay 1,MEC-105,30-XX,2026-10-13,2026-10-21,8,20,MEC-L5-065
+MEC-L5-067,Install Heat Exchanger MEC-106,1.5.1.3,Heat Exchangers Erection,L5,Mechanical,Compressor Bay 2,MEC-106,6-XX,2026-10-15,2026-10-24,9,75,MEC-L5-066
+MEC-L5-068,Coupling inspection for Pump MEC-107,1.5.2.4,Rotating Equipment Commissioning,L5,Mechanical,Substation Yard,MEC-107,8-XX,2026-09-02,2026-09-12,10,0,MEC-L5-067
+MEC-L5-069,Erect Main Column MEC-108 Section,1.5.1.1,Major Static Columns,L5,Mechanical,Flare Yard,MEC-108,12-XX,2026-09-04,2026-09-07,3,50,MEC-L5-068
+MEC-L5-070,Align Compressor Drive Shaft MEC-109,1.5.2.2,Rotating Equipment Alignment,L5,Mechanical,Tank Farm 1,MEC-109,18-XX,2026-09-06,2026-09-10,4,100,MEC-L5-069
+MEC-L5-071,Install Heat Exchanger MEC-110,1.5.1.3,Heat Exchangers Erection,L5,Mechanical,Switchgear L2,MEC-110,24-XX,2026-09-08,2026-09-13,5,20,MEC-L5-070
+MEC-L5-072,Coupling inspection for Pump MEC-111,1.5.2.4,Rotating Equipment Commissioning,L5,Mechanical,Area PR-01,MEC-111,30-XX,2026-09-10,2026-09-16,6,75,MEC-L5-071
+MEC-L5-073,Erect Main Column MEC-112 Section,1.5.1.1,Major Static Columns,L5,Mechanical,Area PR-02,MEC-112,6-XX,2026-09-12,2026-09-19,7,0,MEC-L5-072
+MEC-L5-074,Align Compressor Drive Shaft MEC-113,1.5.2.2,Rotating Equipment Alignment,L5,Mechanical,Area PR-03,MEC-113,8-XX,2026-09-14,2026-09-22,8,50,MEC-L5-073
+MEC-L5-075,Install Heat Exchanger MEC-114,1.5.1.3,Heat Exchangers Erection,L5,Mechanical,Area PR-04,MEC-114,12-XX,2026-09-16,2026-09-25,9,100,MEC-L5-074
+MEC-L5-076,Coupling inspection for Pump MEC-115,1.5.2.4,Rotating Equipment Commissioning,L5,Mechanical,Compressor Bay 1,MEC-115,18-XX,2026-09-18,2026-09-28,10,20,MEC-L5-075
+MEC-L5-077,Erect Main Column MEC-116 Section,1.5.1.1,Major Static Columns,L5,Mechanical,Compressor Bay 2,MEC-116,24-XX,2026-09-20,2026-09-23,3,75,MEC-L5-076
+MEC-L5-078,Align Compressor Drive Shaft MEC-117,1.5.2.2,Rotating Equipment Alignment,L5,Mechanical,Substation Yard,MEC-117,30-XX,2026-09-22,2026-09-26,4,0,MEC-L5-077
+MEC-L5-079,Install Heat Exchanger MEC-118,1.5.1.3,Heat Exchangers Erection,L5,Mechanical,Flare Yard,MEC-118,6-XX,2026-09-24,2026-09-29,5,50,MEC-L5-078
+MEC-L5-080,Coupling inspection for Pump MEC-119,1.5.2.4,Rotating Equipment Commissioning,L5,Mechanical,Tank Farm 1,MEC-119,8-XX,2026-09-26,2026-10-02,6,100,MEC-L5-079
+INS-L5-081,Mount Pressure Transmitter INS-100 at Area PR-03,1.6.1.1,Field Instruments Installation,L5,Instrumentation,Area PR-03,INS-100,24-XX,2026-09-28,2026-10-01,3,20,
+INS-L5-082,Calibrate Flow Control Valve INS-101,1.6.2.3,Control Valves Calibration,L5,Instrumentation,Area PR-04,INS-101,18-YY,2026-09-30,2026-10-04,4,75,INS-L5-081
+INS-L5-083,Loop check temperature sensor INS-102,1.6.3.1,Loop Checking,L5,Instrumentation,Compressor Bay 1,INS-102,12-XX,2026-10-02,2026-10-07,5,0,INS-L5-082
+INS-L5-084,Hookup DCS Marshalling Cabinet at Compressor Bay 2,1.6.1.4,DCS Marshalling,L5,Instrumentation,Compressor Bay 2,DCS-01,18-XX,2026-10-04,2026-10-10,6,50,INS-L5-083
+INS-L5-085,Mount Pressure Transmitter INS-104 at Substation Yard,1.6.1.1,Field Instruments Installation,L5,Instrumentation,Substation Yard,INS-104,24-XX,2026-10-06,2026-10-13,7,100,INS-L5-084
+INS-L5-086,Calibrate Flow Control Valve INS-105,1.6.2.3,Control Valves Calibration,L5,Instrumentation,Flare Yard,INS-105,18-YY,2026-10-08,2026-10-16,8,20,INS-L5-085
+INS-L5-087,Loop check temperature sensor INS-106,1.6.3.1,Loop Checking,L5,Instrumentation,Tank Farm 1,INS-106,6-XX,2026-10-10,2026-10-19,9,75,INS-L5-086
+INS-L5-088,Hookup DCS Marshalling Cabinet at Switchgear L2,1.6.1.4,DCS Marshalling,L5,Instrumentation,Switchgear L2,DCS-01,8-XX,2026-10-12,2026-10-22,10,0,INS-L5-087
+INS-L5-089,Mount Pressure Transmitter INS-108 at Area PR-01,1.6.1.1,Field Instruments Installation,L5,Instrumentation,Area PR-01,INS-108,24-XX,2026-10-14,2026-10-17,3,50,INS-L5-088
+INS-L5-090,Calibrate Flow Control Valve INS-109,1.6.2.3,Control Valves Calibration,L5,Instrumentation,Area PR-02,INS-109,18-YY,2026-09-01,2026-09-05,4,100,INS-L5-089
+INS-L5-091,Loop check temperature sensor INS-110,1.6.3.1,Loop Checking,L5,Instrumentation,Area PR-03,INS-110,24-XX,2026-09-03,2026-09-08,5,20,INS-L5-090
+INS-L5-092,Hookup DCS Marshalling Cabinet at Area PR-04,1.6.1.4,DCS Marshalling,L5,Instrumentation,Area PR-04,DCS-01,30-XX,2026-09-05,2026-09-11,6,75,INS-L5-091
+INS-L5-093,Mount Pressure Transmitter INS-112 at Compressor Bay 1,1.6.1.1,Field Instruments Installation,L5,Instrumentation,Compressor Bay 1,INS-112,24-XX,2026-09-07,2026-09-14,7,0,INS-L5-092
+INS-L5-094,Calibrate Flow Control Valve INS-113,1.6.2.3,Control Valves Calibration,L5,Instrumentation,Compressor Bay 2,INS-113,18-YY,2026-09-09,2026-09-17,8,50,INS-L5-093
+INS-L5-095,Loop check temperature sensor INS-114,1.6.3.1,Loop Checking,L5,Instrumentation,Substation Yard,INS-114,12-XX,2026-09-11,2026-09-20,9,100,INS-L5-094
+INS-L5-096,Hookup DCS Marshalling Cabinet at Flare Yard,1.6.1.4,DCS Marshalling,L5,Instrumentation,Flare Yard,DCS-01,18-XX,2026-09-13,2026-09-23,10,20,INS-L5-095
+INS-L5-097,Mount Pressure Transmitter INS-116 at Tank Farm 1,1.6.1.1,Field Instruments Installation,L5,Instrumentation,Tank Farm 1,INS-116,24-XX,2026-09-15,2026-09-18,3,75,INS-L5-096
+INS-L5-098,Calibrate Flow Control Valve INS-117,1.6.2.3,Control Valves Calibration,L5,Instrumentation,Switchgear L2,INS-117,18-YY,2026-09-17,2026-09-21,4,0,INS-L5-097
+INS-L5-099,Loop check temperature sensor INS-118,1.6.3.1,Loop Checking,L5,Instrumentation,Area PR-01,INS-118,6-XX,2026-09-19,2026-09-24,5,50,INS-L5-098
+INS-L5-100,Hookup DCS Marshalling Cabinet at Area PR-02,1.6.1.4,DCS Marshalling,L5,Instrumentation,Area PR-02,DCS-01,8-XX,2026-09-21,2026-09-27,6,100,INS-L5-099
+STR-L5-101,Erect secondary steel framing at Compressor Bay 2,1.7.1.1,Structural Framing,L5,Structural,Compressor Bay 2,STR-100,6-XX,2026-09-23,2026-09-26,3,20,
+STR-L5-102,Bolt tightening and torque verification at Substation Yard,1.7.1.2,Structural Bolting,L5,Structural,Substation Yard,STR-101,8-XX,2026-09-25,2026-09-29,4,75,STR-L5-101
+STR-L5-103,Install grating and handrails at Flare Yard,1.7.2.1,Access Platforms,L5,Structural,Flare Yard,STR-102,12-XX,2026-09-27,2026-10-02,5,0,STR-L5-102
+STR-L5-104,Fireproofing coating application on structural columns at Tank Farm 1,1.7.3.1,Passive Fireproofing,L5,Structural,Tank Farm 1,STR-103,18-XX,2026-09-29,2026-10-05,6,50,STR-L5-103
+STR-L5-105,Erect secondary steel framing at Switchgear L2,1.7.1.1,Structural Framing,L5,Structural,Switchgear L2,STR-104,24-XX,2026-10-01,2026-10-08,7,100,STR-L5-104
+STR-L5-106,Bolt tightening and torque verification at Area PR-01,1.7.1.2,Structural Bolting,L5,Structural,Area PR-01,STR-105,30-XX,2026-10-03,2026-10-11,8,20,STR-L5-105
+STR-L5-107,Install grating and handrails at Area PR-02,1.7.2.1,Access Platforms,L5,Structural,Area PR-02,STR-106,6-XX,2026-10-05,2026-10-14,9,75,STR-L5-106
+STR-L5-108,Fireproofing coating application on structural columns at Area PR-03,1.7.3.1,Passive Fireproofing,L5,Structural,Area PR-03,STR-107,8-XX,2026-10-07,2026-10-17,10,0,STR-L5-107
+STR-L5-109,Erect secondary steel framing at Area PR-04,1.7.1.1,Structural Framing,L5,Structural,Area PR-04,STR-108,12-XX,2026-10-09,2026-10-12,3,50,STR-L5-108
+STR-L5-110,Bolt tightening and torque verification at Compressor Bay 1,1.7.1.2,Structural Bolting,L5,Structural,Compressor Bay 1,STR-109,18-XX,2026-10-11,2026-10-15,4,100,STR-L5-109
+STR-L5-111,Install grating and handrails at Compressor Bay 2,1.7.2.1,Access Platforms,L5,Structural,Compressor Bay 2,STR-110,24-XX,2026-10-13,2026-10-18,5,20,STR-L5-110
+STR-L5-112,Fireproofing coating application on structural columns at Substation Yard,1.7.3.1,Passive Fireproofing,L5,Structural,Substation Yard,STR-111,30-XX,2026-10-15,2026-10-21,6,75,STR-L5-111
+STR-L5-113,Erect secondary steel framing at Flare Yard,1.7.1.1,Structural Framing,L5,Structural,Flare Yard,STR-112,6-XX,2026-09-02,2026-09-09,7,0,STR-L5-112
+STR-L5-114,Bolt tightening and torque verification at Tank Farm 1,1.7.1.2,Structural Bolting,L5,Structural,Tank Farm 1,STR-113,8-XX,2026-09-04,2026-09-12,8,50,STR-L5-113
+STR-L5-115,Install grating and handrails at Switchgear L2,1.7.2.1,Access Platforms,L5,Structural,Switchgear L2,STR-114,12-XX,2026-09-06,2026-09-15,9,100,STR-L5-114
+STR-L5-116,Fireproofing coating application on structural columns at Area PR-01,1.7.3.1,Passive Fireproofing,L5,Structural,Area PR-01,STR-115,18-XX,2026-09-08,2026-09-18,10,20,STR-L5-115
+STR-L5-117,Erect secondary steel framing at Area PR-02,1.7.1.1,Structural Framing,L5,Structural,Area PR-02,STR-116,24-XX,2026-09-10,2026-09-13,3,75,STR-L5-116
+STR-L5-118,Bolt tightening and torque verification at Area PR-03,1.7.1.2,Structural Bolting,L5,Structural,Area PR-03,STR-117,30-XX,2026-09-12,2026-09-16,4,0,STR-L5-117
+STR-L5-119,Install grating and handrails at Area PR-04,1.7.2.1,Access Platforms,L5,Structural,Area PR-04,STR-118,6-XX,2026-09-14,2026-09-19,5,50,STR-L5-118
+STR-L5-120,Fireproofing coating application on structural columns at Compressor Bay 1,1.7.3.1,Passive Fireproofing,L5,Structural,Compressor Bay 1,STR-119,8-XX,2026-09-16,2026-09-22,6,100,STR-L5-119
