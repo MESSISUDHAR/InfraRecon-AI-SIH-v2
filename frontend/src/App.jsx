@@ -17,6 +17,7 @@ import { getProjects } from './services/api';
 import authService from './services/auth';
 import { Layers } from 'lucide-react';
 import { EventProvider } from './context/EventContext';
+import { PERSONAS, normalizeRole } from './utils/roles';
 
 export default function App() {
   // Authentication State
@@ -26,8 +27,19 @@ export default function App() {
   const [isVerifyingSession, setIsVerifyingSession] = useState(true);
   const [prefilledEmail, setPrefilledEmail] = useState('');
 
-  // Application State
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // Persona / Role-Based State
+  const [currentRole, setCurrentRole] = useState(() => {
+    const user = authService.getUser();
+    return normalizeRole(user?.role);
+  });
+
+  // Application Navigation & Context State
+  const [activeTab, setActiveTab] = useState(() => {
+    const user = authService.getUser();
+    const initialRole = normalizeRole(user?.role);
+    return PERSONAS[initialRole]?.defaultTab || 'planner-review';
+  });
+
   const [systemStatus, setSystemStatus] = useState({ database_connected: false });
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [demoNotice, setDemoNotice] = useState(null);
@@ -71,6 +83,11 @@ export default function App() {
           const user = await authService.getMe();
           setCurrentUser(user);
           setIsAuthenticated(true);
+          const mappedRole = normalizeRole(user?.role);
+          setCurrentRole(mappedRole);
+          if (!PERSONAS[mappedRole]?.allowedTabs.includes(activeTab)) {
+            setActiveTab(PERSONAS[mappedRole]?.defaultTab || 'field-reports');
+          }
         } catch (err) {
           console.warn('Session verification failed, logging out:', err);
           authService.logout();
@@ -125,8 +142,17 @@ export default function App() {
   const handleLoginSuccess = (authData) => {
     setCurrentUser(authData.user);
     setIsAuthenticated(true);
-    setActiveTab('dashboard');
+    const mappedRole = normalizeRole(authData.user?.role);
+    setCurrentRole(mappedRole);
+    setActiveTab(PERSONAS[mappedRole]?.defaultTab || 'planner-review');
     fetchProjects();
+  };
+
+  const handleRoleChange = (newRoleKey) => {
+    if (!PERSONAS[newRoleKey]) return;
+    setCurrentRole(newRoleKey);
+    // When persona switches, automatically navigate to its default page
+    setActiveTab(PERSONAS[newRoleKey].defaultTab);
   };
 
   const handleSignupSuccess = (createdEmail) => {
@@ -190,7 +216,7 @@ export default function App() {
     );
   }
 
-  // Authenticated Application Flow
+  // Authenticated Application Flow - Map tabs to existing pages
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -217,7 +243,7 @@ export default function App() {
   return (
     <EventProvider>
       <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0A0A0A] text-[#EAEAEA]">
-        {/* Top Navigation */}
+        {/* Top Navigation Bar with Persona Switcher */}
         <Navbar
           theme={theme}
           onToggleTheme={toggleTheme}
@@ -229,15 +255,18 @@ export default function App() {
           onLoadDemo={handleLoadDemo}
           currentUser={currentUser}
           onLogout={handleLogout}
+          currentPersona={currentRole}
+          onSelectPersona={handleRoleChange}
         />
 
         {/* Main Workspace Layout */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar Navigation */}
+          {/* Sidebar Navigation filtered by Persona */}
           <Sidebar 
             activeTab={activeTab} 
             onSelectTab={setActiveTab} 
             pendingReviewCount={3}
+            currentPersona={currentRole}
           />
 
           {/* Dynamic Page Container */}

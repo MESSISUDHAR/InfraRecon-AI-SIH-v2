@@ -91,5 +91,46 @@ def init_db():
                     conn.execute(text("CREATE INDEX IF NOT EXISTS idx_activities_embedding_hnsw ON activities USING hnsw (embedding vector_cosine_ops);"))
                 except Exception:
                     pass
+
+        # Seed standard demo accounts if not existing
+        from app.models.user import User
+        from app.services.auth_service import hash_password
+        with SessionLocal() as db:
+            demo_accounts = [
+                {
+                    "id": "USR-DEMO-SUP",
+                    "full_name": "Vikram Sharma (Supervisor)",
+                    "email": "supervisor@infra-project.com",
+                    "role": "Site Supervisor",
+                    "password_hash": hash_password("demo_password123")
+                },
+                {
+                    "id": "USR-DEMO-PLN",
+                    "full_name": "Anita Patel (Planner)",
+                    "email": "planner@infra-project.com",
+                    "role": "Construction Planner",
+                    "password_hash": hash_password("demo_password123")
+                },
+                {
+                    "id": "USR-DEMO-DIR",
+                    "full_name": "Rajesh Kumar (Director)",
+                    "email": "director@infra-project.com",
+                    "role": "Project Director",
+                    "password_hash": hash_password("demo_password123")
+                }
+            ]
+            for acc in demo_accounts:
+                existing = db.query(User).filter(User.email == acc["email"]).first()
+                if not existing:
+                    user_obj = User(
+                        id=acc["id"],
+                        full_name=acc["full_name"],
+                        email=acc["email"],
+                        role=acc["role"],
+                        password_hash=acc["password_hash"],
+                        is_active=True
+                    )
+                    db.add(user_obj)
+            db.commit()
     except Exception:
         pass
