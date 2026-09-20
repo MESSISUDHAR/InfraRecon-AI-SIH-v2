@@ -347,6 +347,7 @@ def parse_schedule_file(
             "planned_progress": planned_progress,
             "predecessor_ids": predecessor_ids,
             "searchable_text": searchable_text,
+            "embedding": None,
             "embedding_json": None
         }
         activities.append(record)
@@ -369,6 +370,7 @@ def parse_schedule_file(
         searchable_texts = [a["searchable_text"] for a in activities]
         embeddings = generate_embeddings_batch(searchable_texts, chunk_size=16)
         for act, emb in zip(activities, embeddings):
+            act["embedding"] = emb
             act["embedding_json"] = json.dumps(emb)
         del searchable_texts
         del embeddings

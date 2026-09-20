@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from sqlalchemy import Column, String, Float, DateTime, Text, Integer, ForeignKey
 from sqlalchemy.orm import relationship
+from pgvector.sqlalchemy import Vector
 from app.database import Base
 
 class Activity(Base):
@@ -35,7 +36,8 @@ class Activity(Base):
     
     # Vector Search & Semantic Text representation
     searchable_text = Column(Text, nullable=True)
-    embedding_json = Column(Text, nullable=True) # JSON array of floats for cosine similarity
+    embedding = Column(Vector(384), nullable=True) # Native pgvector 384-dimensional dense vector
+    embedding_json = Column(Text, nullable=True) # JSON array of floats for cross/backward compatibility
     
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 

@@ -141,6 +141,7 @@ def extract_execution_facts(
             existing_event.delay_reason = extracted_data.delay_reason
             existing_event.evidence_text = extracted_data.evidence_text
             existing_event.extraction_confidence = extracted_data.extraction_confidence
+            existing_event.embedding = event_embedding
             existing_event.embedding_json = embedding_str
             existing_event.status = "EXTRACTED"
             existing_event.model_version = "gemini-2.5-flash" if engine == "gemini" else "heuristic_fallback"
@@ -174,6 +175,7 @@ def extract_execution_facts(
             delay_reason=extracted_data.delay_reason,
             evidence_text=extracted_data.evidence_text,
             extraction_confidence=extracted_data.extraction_confidence,
+            embedding=event_embedding,
             embedding_json=embedding_str,
             status="EXTRACTED",
             model_version="gemini-2.5-flash" if engine == "gemini" else "heuristic_fallback",

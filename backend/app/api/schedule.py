@@ -339,6 +339,7 @@ def generate_all_activity_embeddings(
     embeddings = generate_embeddings_batch(texts, chunk_size=16)
     
     for act, emb in zip(activities, embeddings):
+        act.embedding = emb
         act.embedding_json = json.dumps(emb)
 
     del texts

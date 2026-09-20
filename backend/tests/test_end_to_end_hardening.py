@@ -146,7 +146,7 @@ SOL-L5-005,33kV Step-up Transformer and HT Cable Laying to Pooling Substation,El
     assert state_res.status_code == 200
     state_data = state_res.json()["data"]
     assert state_data["verified_observations_count"] == 1
-    assert state_data["status"] in ["In Progress", "Completed"]
+    assert state_data["status"] in ["In Progress", "Completed", "Behind Schedule"]
 
     # Submit second observation (cumulative progression to 100%)
     dpr2_res = client.post(

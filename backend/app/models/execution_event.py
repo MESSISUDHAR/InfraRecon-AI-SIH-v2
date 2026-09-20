@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from sqlalchemy import Column, String, Float, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
+from pgvector.sqlalchemy import Vector
 from app.database import Base
 
 class ExecutionEvent(Base):
@@ -37,6 +38,7 @@ class ExecutionEvent(Base):
     # Metadata & Tracking
     model_version = Column(String(50), default="gemini-2.5-flash")
     prompt_version = Column(String(50), default="v1.0")
+    embedding = Column(Vector(384), nullable=True) # Native pgvector 384-dimensional dense vector
     embedding_json = Column(Text, nullable=True) # Vector representation of extracted activity description
     ingestion_timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 

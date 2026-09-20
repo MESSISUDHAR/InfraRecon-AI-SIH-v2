@@ -183,20 +183,27 @@ def generate_embeddings_batch(texts: List[str], chunk_size: int = 16) -> List[Li
 
     return [_dense_fallback_embedding(t) for t in texts]
 
-def compute_cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
+from app.database import is_postgresql
+
+def compute_cosine_similarity(vec_a: Optional[Union[List[float], np.ndarray]], vec_b: Optional[Union[List[float], np.ndarray]]) -> float:
     """
-    Computes cosine similarity between two dense vectors.
+    Computes cosine similarity between two dense vectors using NumPy.
     Since generated embeddings are L2-normalized, cosine similarity equals dot product.
     Returns a score clamped to [0.0, 1.0].
     """
-    if not vec_a or not vec_b:
+    if vec_a is None or vec_b is None:
         return 0.0
-    if len(vec_a) != len(vec_b):
+    
+    try:
+        a = np.asarray(vec_a, dtype=np.float32)
+        b = np.asarray(vec_b, dtype=np.float32)
+        if a.shape != b.shape or a.size == 0:
+            return 0.0
+        
+        dot = float(np.dot(a, b))
+        return max(0.0, min(1.0, dot))
+    except Exception:
         return 0.0
-
-    dot = sum(a * b for a, b in zip(vec_a, vec_b))
-    # Clamp between 0.0 and 1.0
-    return max(0.0, min(1.0, float(dot)))
 
 def search_top_k_activities(
     query_text: str,
@@ -208,6 +215,7 @@ def search_top_k_activities(
 ) -> List[Dict[str, Any]]:
     """
     Performs Top-K dense semantic similarity retrieval over ingested schedule activities.
+    Uses native PostgreSQL + pgvector vector distance as primary, with seamless SQLite + NumPy fallback.
     """
     if db is None:
         return []
@@ -215,14 +223,59 @@ def search_top_k_activities(
     # 1. Generate query embedding
     query_embedding = generate_embedding(query_text)
 
-    # 2. Query project activities from database
-    query = db.query(Activity).filter(Activity.project_id == project_id)
-    if schedule_version:
-        query = query.filter(Activity.schedule_version == schedule_version)
-    else:
+    # 2. Determine target schedule version
+    target_version = schedule_version
+    if not target_version:
         proj = db.query(Project).filter(Project.id == project_id).first()
         if proj and proj.active_schedule_version:
-            query = query.filter(Activity.schedule_version == proj.active_schedule_version)
+            target_version = proj.active_schedule_version
+
+    # 3. Primary: Native PostgreSQL + pgvector cosine distance search
+    if is_postgresql():
+        try:
+            vec_query = db.query(
+                Activity,
+                Activity.embedding.cosine_distance(query_embedding).label("distance")
+            ).filter(
+                Activity.project_id == project_id,
+                Activity.embedding.isnot(None)
+            )
+            if target_version:
+                vec_query = vec_query.filter(Activity.schedule_version == target_version)
+            if discipline_filter and discipline_filter != "ALL":
+                vec_query = vec_query.filter(Activity.discipline == discipline_filter)
+
+            results = vec_query.order_by("distance").limit(top_k).all()
+            if results:
+                scored_candidates = []
+                for rank, (act, dist) in enumerate(results, 1):
+                    sim = max(0.0, min(1.0, 1.0 - float(dist) if dist is not None else 0.0))
+                    scored_candidates.append({
+                        "rank": rank,
+                        "activity_id": act.activity_id,
+                        "id": act.id,
+                        "activity_name": act.activity_name,
+                        "discipline": act.discipline,
+                        "location": act.location,
+                        "asset_id": act.asset_id,
+                        "line_id": act.line_id,
+                        "wbs_name": act.wbs_name,
+                        "wbs_code": act.wbs_code,
+                        "level": act.level,
+                        "planned_start": act.planned_start.isoformat() if act.planned_start else None,
+                        "planned_finish": act.planned_finish.isoformat() if act.planned_finish else None,
+                        "planned_progress": act.planned_progress,
+                        "semantic_score": round(sim, 4),
+                        "searchable_text": act.searchable_text
+                    })
+                return scored_candidates
+        except Exception as e:
+            logger.warning(f"Native pgvector search failed ({str(e)}). Falling back to in-memory NumPy cosine similarity.")
+
+    # 4. Fallback: SQLite + in-memory NumPy cosine similarity
+    query = db.query(Activity).filter(Activity.project_id == project_id)
+    if target_version:
+        query = query.filter(Activity.schedule_version == target_version)
 
     if discipline_filter and discipline_filter != "ALL":
         query = query.filter(Activity.discipline == discipline_filter)
@@ -231,20 +284,21 @@ def search_top_k_activities(
     if not activities:
         return []
 
-    # 3. Compute cosine similarity for each candidate activity
     scored_candidates = []
     for act in activities:
         act_embedding = None
-        if act.embedding_json:
+        if act.embedding is not None:
+            act_embedding = act.embedding if isinstance(act.embedding, (list, np.ndarray)) else list(act.embedding)
+        elif act.embedding_json:
             try:
                 act_embedding = json.loads(act.embedding_json)
             except Exception:
                 act_embedding = None
 
         if not act_embedding:
-            # Generate dynamically if not yet stored
             act_text = act.searchable_text or f"{act.activity_name} {act.discipline or ''} {act.location or ''}"
             act_embedding = generate_embedding(act_text)
+            act.embedding = act_embedding
             act.embedding_json = json.dumps(act_embedding)
 
         similarity = compute_cosine_similarity(query_embedding, act_embedding)
@@ -267,11 +321,9 @@ def search_top_k_activities(
             "searchable_text": act.searchable_text
         })
 
-    # 4. Sort descending by semantic score and return Top-K
     scored_candidates.sort(key=lambda x: x["semantic_score"], reverse=True)
     top_candidates = scored_candidates[:top_k]
 
-    # Assign ranks
     for rank, cand in enumerate(top_candidates, 1):
         cand["rank"] = rank
 

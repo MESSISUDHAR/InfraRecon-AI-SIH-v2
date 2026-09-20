@@ -422,7 +422,9 @@ def reconcile_execution_event(
 
     for act in activities:
         act_embedding = None
-        if act.embedding_json:
+        if act.embedding is not None:
+            act_embedding = act.embedding if isinstance(act.embedding, list) else list(act.embedding)
+        elif act.embedding_json:
             try:
                 act_embedding = json.loads(act.embedding_json)
             except Exception:
@@ -431,6 +433,7 @@ def reconcile_execution_event(
         if not act_embedding:
             act_text = act.searchable_text or f"{act.activity_name} {act.discipline or ''} {act.location or ''}"
             act_embedding = generate_embedding(act_text)
+            act.embedding = act_embedding
             act.embedding_json = json.dumps(act_embedding)
 
         sem_sim = compute_cosine_similarity(query_embedding, act_embedding)

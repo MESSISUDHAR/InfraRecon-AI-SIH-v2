@@ -1,18 +1,24 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text, inspect
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.config import settings
 
 # Database engine configuration (supports SQLite and PostgreSQL seamlessly)
 database_url = settings.DATABASE_URL
-connect_args = {}
+engine_kwargs = {"echo": False}
 
 if database_url.startswith("sqlite"):
-    connect_args = {"check_same_thread": False}
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+elif database_url.startswith("postgresql") or database_url.startswith("postgres"):
+    engine_kwargs.update({
+        "pool_pre_ping": True,
+        "pool_size": 10,
+        "max_overflow": 20,
+        "pool_timeout": 30
+    })
 
 engine = create_engine(
     database_url,
-    connect_args=connect_args,
-    echo=False
+    **engine_kwargs
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -26,8 +32,21 @@ def get_db():
     finally:
         db.close()
 
+def is_postgresql() -> bool:
+    """Returns True if the active database dialect is PostgreSQL."""
+    return engine.dialect.name == "postgresql"
+
 def init_db():
-    # Import all models to register with metadata
+    # 1. Enable pgvector extension if running on PostgreSQL
+    if is_postgresql():
+        try:
+            with engine.begin() as conn:
+                conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+        except Exception as e:
+            # Fallback or log if extension creation requires specific permissions
+            pass
+
+    # 2. Import all models to register with metadata
     from app.models import (
         project,
         activity,
@@ -40,9 +59,8 @@ def init_db():
     )
     Base.metadata.create_all(bind=engine)
 
-    # Safe lightweight schema synchronization for development and SQLite
+    # 3. Safe lightweight schema synchronization
     try:
-        from sqlalchemy import inspect, text
         inspector = inspect(engine)
         if "execution_events" in inspector.get_table_names():
             existing_cols = {col["name"] for col in inspector.get_columns("execution_events")}
@@ -52,7 +70,26 @@ def init_db():
                 if "reporter_name" not in existing_cols:
                     conn.execute(text("ALTER TABLE execution_events ADD COLUMN reporter_name VARCHAR(100)"))
                 if "report_date" not in existing_cols:
-                    conn.execute(text("ALTER TABLE execution_events ADD COLUMN report_date DATETIME"))
+                    conn.execute(text("ALTER TABLE execution_events ADD COLUMN report_date TIMESTAMP" if is_postgresql() else "ALTER TABLE execution_events ADD COLUMN report_date DATETIME"))
+                if "embedding" not in existing_cols:
+                    conn.execute(text("ALTER TABLE execution_events ADD COLUMN embedding VECTOR(384)"))
+                if "embedding_json" not in existing_cols:
+                    conn.execute(text("ALTER TABLE execution_events ADD COLUMN embedding_json TEXT"))
+        
+        if "activities" in inspector.get_table_names():
+            existing_act_cols = {col["name"] for col in inspector.get_columns("activities")}
+            with engine.begin() as conn:
+                if "embedding" not in existing_act_cols:
+                    conn.execute(text("ALTER TABLE activities ADD COLUMN embedding VECTOR(384)"))
+                if "embedding_json" not in existing_act_cols:
+                    conn.execute(text("ALTER TABLE activities ADD COLUMN embedding_json TEXT"))
+
+        # Create pgvector HNSW index for fast approximate nearest neighbor search if PostgreSQL
+        if is_postgresql():
+            with engine.begin() as conn:
+                try:
+                    conn.execute(text("CREATE INDEX IF NOT EXISTS idx_activities_embedding_hnsw ON activities USING hnsw (embedding vector_cosine_ops);"))
+                except Exception:
+                    pass
     except Exception:
         pass
-
