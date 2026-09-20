@@ -16,6 +16,7 @@ import WeightConfigModal from './components/Common/WeightConfigModal';
 import { getProjects } from './services/api';
 import authService from './services/auth';
 import { Layers } from 'lucide-react';
+import { EventProvider } from './context/EventContext';
 
 export default function App() {
   // Authentication State
@@ -214,50 +215,52 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0A0A0A] text-[#EAEAEA]">
-      {/* Top Navigation */}
-      <Navbar
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        systemStatus={systemStatus}
-        activeProject={activeProject}
-        projectsList={projectsList}
-        onSelectProject={handleProjectSelect}
-        onOpenConfig={() => setIsConfigOpen(true)}
-        onLoadDemo={handleLoadDemo}
-        currentUser={currentUser}
-        onLogout={handleLogout}
-      />
-
-      {/* Main Workspace Layout */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar Navigation */}
-        <Sidebar 
-          activeTab={activeTab} 
-          onSelectTab={setActiveTab} 
-          pendingReviewCount={3}
+    <EventProvider>
+      <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0A0A0A] text-[#EAEAEA]">
+        {/* Top Navigation */}
+        <Navbar
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          systemStatus={systemStatus}
+          activeProject={activeProject}
+          projectsList={projectsList}
+          onSelectProject={handleProjectSelect}
+          onOpenConfig={() => setIsConfigOpen(true)}
+          onLoadDemo={handleLoadDemo}
+          currentUser={currentUser}
+          onLogout={handleLogout}
         />
 
-        {/* Dynamic Page Container */}
-        <main className="flex-1 overflow-y-auto bg-[#0A0A0A] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(212,175,55,0.04),rgba(10,10,10,0))]">
-          {demoNotice && (
-            <div className="bg-[#1A1A1A] border-b border-[#D4AF37]/30 px-6 py-2.5 text-xs text-[#F4D06F] flex items-center justify-between shadow-sm">
-              <span className="flex items-center gap-2">
-                <span className="text-[#D4AF37]">✨</span>
-                <span>{demoNotice}</span>
-              </span>
-              <button onClick={() => setDemoNotice(null)} className="text-[#A3A3A3] hover:text-[#D4AF37] transition-colors">✕</button>
-            </div>
-          )}
-          {renderContent()}
-        </main>
-      </div>
+        {/* Main Workspace Layout */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar Navigation */}
+          <Sidebar 
+            activeTab={activeTab} 
+            onSelectTab={setActiveTab} 
+            pendingReviewCount={3}
+          />
 
-      {/* Reconciliation Weight Config Modal */}
-      <WeightConfigModal
-        isOpen={isConfigOpen}
-        onClose={() => setIsConfigOpen(false)}
-      />
-    </div>
+          {/* Dynamic Page Container */}
+          <main className="flex-1 overflow-y-auto bg-[#0A0A0A] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(212,175,55,0.04),rgba(10,10,10,0))]">
+            {demoNotice && (
+              <div className="bg-[#1A1A1A] border-b border-[#D4AF37]/30 px-6 py-2.5 text-xs text-[#F4D06F] flex items-center justify-between shadow-sm">
+                <span className="flex items-center gap-2">
+                  <span className="text-[#D4AF37]">✨</span>
+                  <span>{demoNotice}</span>
+                </span>
+                <button onClick={() => setDemoNotice(null)} className="text-[#A3A3A3] hover:text-[#D4AF37] transition-colors">✕</button>
+              </div>
+            )}
+            {renderContent()}
+          </main>
+        </div>
+
+        {/* Reconciliation Weight Config Modal */}
+        <WeightConfigModal
+          isOpen={isConfigOpen}
+          onClose={() => setIsConfigOpen(false)}
+        />
+      </div>
+    </EventProvider>
   );
 }

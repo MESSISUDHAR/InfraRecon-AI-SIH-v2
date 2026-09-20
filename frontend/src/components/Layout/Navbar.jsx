@@ -12,8 +12,11 @@ import {
   Moon,
   Shield,
   LogOut,
-  User as UserIcon
+  User as UserIcon,
+  FileText,
+  X
 } from 'lucide-react';
+import { useActiveEvent } from '../../context/EventContext';
 
 export default function Navbar({ 
   theme = 'dark',
@@ -27,6 +30,8 @@ export default function Navbar({
   currentUser = null,
   onLogout
 }) {
+  const { activeEventId, activeEvent, clearActiveEvent } = useActiveEvent();
+
   // Helper to get initials
   const getInitials = (name) => {
     if (!name) return 'IR';
@@ -88,6 +93,35 @@ export default function Navbar({
             {activeProject?.active_schedule_version || "v1.0"}
           </span>
         </div>
+
+        {/* Active Execution Event Indicator */}
+        {activeEventId && (
+          <div className="hidden md:flex items-center gap-2 bg-[#1A1A1A] border border-[#D4AF37]/40 shadow-sm rounded-lg px-3 py-1.5 text-xs text-[#EAEAEA]">
+            <FileText className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <div className="flex items-center gap-1.5">
+              <span className="text-[#A3A3A3] text-[11px]">Active Event:</span>
+              <span className="font-mono font-bold text-[#F4D06F]">
+                {activeEvent?.source_id || activeEventId}
+              </span>
+              <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded border ${
+                activeEvent?.status === 'VERIFIED'
+                  ? 'bg-[#10B981]/15 text-[#10B981] border-[#10B981]/30'
+                  : activeEvent?.status === 'EXTRACTED'
+                    ? 'bg-[#3B82F6]/15 text-[#60A5FA] border-[#3B82F6]/30'
+                    : 'bg-[#D4AF37]/15 text-[#F4D06F] border-[#D4AF37]/30'
+              }`}>
+                {activeEvent?.status || 'INGESTED'}
+              </span>
+            </div>
+            <button
+              onClick={clearActiveEvent}
+              className="ml-1 text-[#A3A3A3] hover:text-white p-0.5 rounded"
+              title="Clear active event focus"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Right Controls: Data Date, Health, Actions, User Profile & Logout */}

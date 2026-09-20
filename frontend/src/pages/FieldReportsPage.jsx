@@ -25,7 +25,8 @@ import {
   ArrowRight,
   Zap,
   Check,
-  CheckCheck
+  CheckCheck,
+  Target
 } from 'lucide-react';
 import { 
   submitExecutionEvent, 
@@ -37,6 +38,7 @@ import {
   getExecutionStatus,
   getProjects
 } from '../services/api';
+import { useActiveEvent } from '../context/EventContext';
 
 export const SAMPLE_DPRS = [
   {
@@ -82,6 +84,9 @@ export const SAMPLE_DPRS = [
 ];
 
 export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-REF-04' }) {
+  // Global Active Event Hook
+  const { activeEventId, activeEvent, setActiveEvent, setActiveEventId, clearActiveEvent, refreshActiveEvent } = useActiveEvent();
+
   // Active Project State
   const [projectId, setProjectId] = useState(initialProjectId);
   const [projectsList, setProjectsList] = useState([]);
@@ -127,6 +132,62 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
     };
     loadInitialData();
   }, []);
+
+  // Re-hydrate active event when activeEvent is loaded/switched
+  useEffect(() => {
+    if (activeEvent) {
+      if (activeEvent.raw_text) {
+        setInputText(activeEvent.raw_text);
+      }
+      if (activeEvent.source_id) {
+        setSourceId(activeEvent.source_id);
+      }
+      if (activeEvent.source_type) {
+        setSourceType(activeEvent.source_type);
+      }
+      if (activeEvent.reporter_name) {
+        setReporterName(activeEvent.reporter_name);
+      }
+      if (activeEvent.source_reference) {
+        setSourceReference(activeEvent.source_reference);
+      }
+      if (activeEvent.report_date) {
+        try {
+          const d = new Date(activeEvent.report_date);
+          if (!isNaN(d.getTime())) {
+            setReportDate(d.toISOString().slice(0, 10));
+          }
+        } catch (e) {}
+      }
+
+      // Re-hydrate extractedResult if the event is already extracted, verified, or has facts
+      if (activeEvent.status === 'EXTRACTED' || activeEvent.status === 'VERIFIED' || activeEvent.activity_description) {
+        setExtractedResult({
+          success: true,
+          message: `Re-hydrated persistent ExecutionEvent (${activeEvent.source_id || activeEvent.id}) from database.`,
+          raw_text: activeEvent.raw_text,
+          event: activeEvent,
+          engine: activeEvent.model_version === 'gemini-2.5-flash' ? 'gemini' : 'heuristic_fallback',
+          execution_time_ms: 0,
+          extracted_data: {
+            activity_description: activeEvent.activity_description,
+            discipline: activeEvent.discipline || 'General',
+            location: activeEvent.location,
+            asset_id: activeEvent.asset_id,
+            line_id: activeEvent.line_id,
+            event_type: activeEvent.event_type || 'progress',
+            actual_start: activeEvent.actual_start,
+            actual_finish: activeEvent.actual_finish,
+            progress: activeEvent.event_progress,
+            status: activeEvent.status,
+            delay_reason: activeEvent.delay_reason,
+            evidence_text: activeEvent.evidence_text || activeEvent.raw_text,
+            extraction_confidence: activeEvent.extraction_confidence || 0.95
+          }
+        });
+      }
+    }
+  }, [activeEvent]);
 
   const currentEngine = extractedResult?.engine || engineStatus?.default_engine || 'heuristic_fallback';
 
@@ -182,6 +243,7 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
 
   // Handle Preset Quick Selection
   const handleSelectPreset = (sample) => {
+    clearActiveEvent();
     setSelectedPreset(sample.id);
     setInputText(sample.text);
     setSourceId(sample.sourceId);
@@ -210,15 +272,23 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
         save_to_db: saveToDb
       };
 
+      // If we are re-extracting an existing active event that has the same text, bind by event_id
+      if (activeEventId && activeEvent && activeEvent.raw_text?.trim() === inputText.trim()) {
+        payload.event_id = activeEventId;
+      }
+
       const res = await extractExecutionEvent(payload);
       if (res.success) {
         setExtractedResult(res);
+        if (res.event) {
+          setActiveEvent(res.event);
+        }
         const engineLabel = res.engine === 'gemini' 
           ? 'Gemini 2.5 Flash — Live' 
           : 'Grounded Local Fallback — Gemini key not configured';
         setFeedback({
           type: 'success',
-          message: `${engineLabel} extracted facts in ${res.execution_time_ms}ms with ${(res.extracted_data.extraction_confidence * 100).toFixed(0)}% confidence.`
+          message: `${engineLabel} extracted facts in ${res.execution_time_ms}ms with ${(res.extracted_data.extraction_confidence * 100).toFixed(0)}% confidence. Event ID: ${res.event?.source_id || res.event?.id || 'Active'}`
         });
         if (saveToDb) {
           fetchReports();
@@ -256,13 +326,12 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
       };
 
       const res = await submitExecutionEvent(payload);
-      if (res.success) {
+      if (res.success && res.event) {
+        setActiveEvent(res.event);
         setFeedback({
           type: 'success',
           message: `Evidence successfully ingested with ID: ${res.event.source_id}. Status: INGESTED.`
         });
-        const nextId = `DPR-${new Date().toISOString().slice(0, 10)}-${Math.floor(100 + Math.random() * 900)}`;
-        setSourceId(nextId);
         fetchReports();
       }
     } catch (err) {
@@ -281,6 +350,11 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
     try {
       const res = await extractEventById(eventId);
       if (res.success) {
+        if (res.event) {
+          setActiveEvent(res.event);
+        } else {
+          setActiveEventId(eventId);
+        }
         setFeedback({
           type: 'success',
           message: `Event extracted successfully! Discipline: ${res.extracted_data.discipline}, Location: ${res.extracted_data.location || 'N/A'}.`
@@ -313,6 +387,9 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
 
       const res = await uploadExecutionFile(formData);
       if (res.success) {
+        if (res.events && res.events.length > 0) {
+          setActiveEvent(res.events[0]);
+        }
         setFeedback({
           type: 'success',
           message: `File "${file.name}" ingested successfully! ${res.count} raw evidence observation(s) saved.`
@@ -335,6 +412,10 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
     if (!window.confirm('Delete this ingested evidence report?')) return;
     try {
       await deleteExecutionEvent(eventId);
+      if (activeEventId === eventId) {
+        clearActiveEvent();
+        setExtractedResult(null);
+      }
       fetchReports();
     } catch (err) {
       alert('Failed to delete report: ' + (err.response?.data?.detail || err.message));
@@ -796,72 +877,118 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#2A2A2A] text-[#EAEAEA]">
-                {reports.map((report) => (
-                  <tr key={report.id} className="hover:bg-[#1A1A1A] transition-colors">
-                    <td className="py-2.5 px-3 font-mono font-bold text-[#D4AF37] whitespace-nowrap">
-                      {report.source_id || report.id.slice(0, 8)}
-                    </td>
-                    <td className="py-2.5 px-3 text-[#A3A3A3] whitespace-nowrap text-[11px]">
-                      {report.report_date ? new Date(report.report_date).toLocaleDateString() : 'N/A'}
-                    </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap">
-                      {report.discipline ? (
-                        <span className="px-2 py-0.5 rounded bg-[#1A1A1A] border border-[#2A2A2A] text-[10px] text-[#F4D06F] font-semibold">
-                          {report.discipline}
-                        </span>
-                      ) : (
-                        <span className="text-[#6b6b6b] text-[11px]">—</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap text-[#10B981] text-[11px] font-medium">
-                      {report.location || '—'}
-                    </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap text-[#F4D06F] text-[11px] font-mono">
-                      {report.line_id || report.asset_id || '—'}
-                    </td>
-                    <td className="py-2.5 px-3 text-[#EAEAEA] max-w-xs truncate font-sans" title={report.raw_text}>
-                      {report.raw_text}
-                    </td>
-                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                        report.status === 'EXTRACTED'
-                          ? 'bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/30'
-                          : 'bg-[#D4AF37]/10 text-[#F4D06F] border border-[#D4AF37]/30'
-                      }`}>
-                        {report.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {report.status === 'INGESTED' && (
-                          <button
-                            onClick={() => handleExtractRow(report.id)}
-                            disabled={rowExtractingId === report.id}
-                            className="px-2 py-0.5 rounded bg-[#D4AF37]/15 hover:bg-[#D4AF37]/30 text-[#F4D06F] border border-[#D4AF37]/40 text-[10px] font-semibold flex items-center gap-1"
-                            title="Extract structured facts"
-                          >
-                            <Sparkles className={`w-3 h-3 ${rowExtractingId === report.id ? 'animate-spin' : ''}`} />
-                            <span>{rowExtractingId === report.id ? 'Extracting...' : 'Extract'}</span>
-                          </button>
+                {reports.map((report) => {
+                  const isActive = report.id === activeEventId;
+                  return (
+                    <tr 
+                      key={report.id} 
+                      className={`transition-colors ${
+                        isActive 
+                          ? 'bg-[#D4AF37]/10 border-l-2 border-l-[#D4AF37] hover:bg-[#D4AF37]/15' 
+                          : 'hover:bg-[#1A1A1A]'
+                      }`}
+                    >
+                      <td className="py-2.5 px-3 font-mono font-bold text-[#D4AF37] whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          {isActive && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse" title="Currently Active Event" />
+                          )}
+                          <span>{report.source_id || report.id.slice(0, 8)}</span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 text-[#A3A3A3] whitespace-nowrap text-[11px]">
+                        {report.report_date ? new Date(report.report_date).toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        {report.discipline ? (
+                          <span className="px-2 py-0.5 rounded bg-[#1A1A1A] border border-[#2A2A2A] text-[10px] text-[#F4D06F] font-semibold">
+                            {report.discipline}
+                          </span>
+                        ) : (
+                          <span className="text-[#6b6b6b] text-[11px]">—</span>
                         )}
-                        <button
-                          onClick={() => setViewingReport(report)}
-                          className="p-1 rounded hover:bg-[#1A1A1A] text-[#A3A3A3] hover:text-[#D4AF37] transition-colors"
-                          title="View Full Evidence"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteReport(report.id)}
-                          className="p-1 rounded hover:bg-[#1A1A1A] text-[#A3A3A3] hover:text-[#EF4444] transition-colors"
-                          title="Delete Evidence Record"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="py-2.5 px-3 whitespace-nowrap text-[#10B981] text-[11px] font-medium">
+                        {report.location || '—'}
+                      </td>
+                      <td className="py-2.5 px-3 whitespace-nowrap text-[#F4D06F] text-[11px] font-mono">
+                        {report.line_id || report.asset_id || '—'}
+                      </td>
+                      <td className="py-2.5 px-3 text-[#EAEAEA] max-w-xs truncate font-sans" title={report.raw_text}>
+                        {report.raw_text}
+                      </td>
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                          report.status === 'VERIFIED'
+                            ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30'
+                            : report.status === 'EXTRACTED'
+                              ? 'bg-[#3B82F6]/15 text-[#60A5FA] border border-[#3B82F6]/30'
+                              : 'bg-[#D4AF37]/10 text-[#F4D06F] border border-[#D4AF37]/30'
+                        }`}>
+                          {report.status}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {isActive ? (
+                            <span className="px-2 py-0.5 rounded bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 text-[10px] font-bold">
+                              Active Focus
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => setActiveEvent(report)}
+                              className="px-2 py-0.5 rounded bg-[#1A1A1A] hover:bg-[#D4AF37]/20 text-[#A3A3A3] hover:text-[#D4AF37] border border-[#2A2A2A] hover:border-[#D4AF37]/40 text-[10px] font-medium transition-all"
+                              title="Set as Active Event for Reconciliation & Review"
+                            >
+                              Focus
+                            </button>
+                          )}
+
+                          {report.status === 'INGESTED' && (
+                            <button
+                              onClick={() => handleExtractRow(report.id)}
+                              disabled={rowExtractingId === report.id}
+                              className="px-2 py-0.5 rounded bg-[#D4AF37]/15 hover:bg-[#D4AF37]/30 text-[#F4D06F] border border-[#D4AF37]/40 text-[10px] font-semibold flex items-center gap-1"
+                              title="Extract structured facts"
+                            >
+                              <Sparkles className={`w-3 h-3 ${rowExtractingId === report.id ? 'animate-spin' : ''}`} />
+                              <span>{rowExtractingId === report.id ? 'Extracting...' : 'Extract'}</span>
+                            </button>
+                          )}
+
+                          {onNavigate && (report.status === 'EXTRACTED' || report.status === 'VERIFIED') && (
+                            <button
+                              onClick={() => {
+                                setActiveEvent(report);
+                                onNavigate('reconciliation');
+                              }}
+                              className="px-2 py-0.5 rounded bg-[#10B981]/15 hover:bg-[#10B981]/30 text-[#10B981] border border-[#10B981]/40 text-[10px] font-semibold flex items-center gap-1"
+                              title="Proceed to Reconciliation"
+                            >
+                              <span>Reconcile</span>
+                              <ArrowRight className="w-2.5 h-2.5" />
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => setViewingReport(report)}
+                            className="p-1 rounded hover:bg-[#1A1A1A] text-[#A3A3A3] hover:text-[#D4AF37] transition-colors"
+                            title="View Full Evidence"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteReport(report.id)}
+                            className="p-1 rounded hover:bg-[#1A1A1A] text-[#A3A3A3] hover:text-[#EF4444] transition-colors"
+                            title="Delete Evidence Record"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

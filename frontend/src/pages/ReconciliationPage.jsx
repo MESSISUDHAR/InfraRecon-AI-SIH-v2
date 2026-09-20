@@ -23,14 +23,16 @@ import {
   RotateCcw,
   SlidersHorizontal,
   Award,
-  Cpu
+  Cpu,
+  Target
 } from 'lucide-react';
 import { 
   reconcileEvent,
   getExecutionEvents, 
-  getMatchesStatus,
+  getMatchesStatus, 
   getReconciliationWeights 
 } from '../services/api';
+import { useActiveEvent } from '../context/EventContext';
 
 const DEFAULT_WEIGHTS = {
   semantic_weight: 0.40,
@@ -74,9 +76,11 @@ const SAMPLE_SCENARIOS = [
   }
 ];
 
-export default function ReconciliationPage({ onNavigate }) {
-  const [projectId, setProjectId] = useState('PRJ-REF-04');
-  const [rawText, setRawText] = useState(SAMPLE_SCENARIOS[0].text);
+export default function ReconciliationPage({ onNavigate, initialProjectId = 'PRJ-REF-04' }) {
+  const { activeEventId, activeEvent, setActiveEventId, setActiveEvent } = useActiveEvent();
+
+  const [projectId, setProjectId] = useState(initialProjectId);
+  const [rawText, setRawText] = useState(activeEvent?.raw_text || SAMPLE_SCENARIOS[0].text);
   const [topK, setTopK] = useState(5);
   const [disciplineFilter, setDisciplineFilter] = useState('ALL');
   
@@ -91,12 +95,23 @@ export default function ReconciliationPage({ onNavigate }) {
   
   // Existing ingested events
   const [ingestedEvents, setIngestedEvents] = useState([]);
-  const [selectedEventId, setSelectedEventId] = useState('');
+  const [selectedEventId, setSelectedEventId] = useState(activeEventId || '');
 
   useEffect(() => {
     loadServiceStatus();
     loadRecentEvents();
   }, [projectId]);
+
+  // Sync with active event on mount / change
+  useEffect(() => {
+    if (activeEventId) {
+      setSelectedEventId(activeEventId);
+      if (activeEvent?.raw_text) {
+        setRawText(activeEvent.raw_text);
+      }
+      handleReconcile(null, activeEventId, weights);
+    }
+  }, [activeEventId, activeEvent?.id]);
 
   const loadServiceStatus = async () => {
     try {
@@ -112,8 +127,9 @@ export default function ReconciliationPage({ onNavigate }) {
   const loadRecentEvents = async () => {
     try {
       const res = await getExecutionEvents({ project_id: projectId });
-      if (res && res.data && res.data.events) {
-        setIngestedEvents(res.data.events);
+      // Corrected response parsing: res.events
+      if (res && Array.isArray(res.events)) {
+        setIngestedEvents(res.events);
       }
     } catch (err) {
       console.warn('Could not load execution events:', err);
@@ -121,12 +137,12 @@ export default function ReconciliationPage({ onNavigate }) {
   };
 
   const handleReconcile = async (customText = null, customEventId = null, customWeights = null) => {
+    const eventIdToSearch = customEventId !== null ? customEventId : (selectedEventId || activeEventId || null);
     const textToSearch = customText !== null ? customText : rawText;
-    const eventIdToSearch = customEventId !== null ? customEventId : (selectedEventId || null);
     const weightsToUse = customWeights || weights;
 
     if (!textToSearch && !eventIdToSearch) {
-      setError('Please provide field report text or select an ingested ExecutionEvent.');
+      setError('Please provide field report text or select an active ExecutionEvent.');
       return;
     }
 
@@ -136,12 +152,16 @@ export default function ReconciliationPage({ onNavigate }) {
     try {
       const payload = {
         project_id: projectId,
-        raw_text: textToSearch || undefined,
         event_id: eventIdToSearch || undefined,
         top_k: topK,
         weights: weightsToUse,
         discipline_filter: disciplineFilter === 'ALL' ? undefined : disciplineFilter
       };
+
+      // Only send raw_text if NO event_id is supplied
+      if (!eventIdToSearch && textToSearch) {
+        payload.raw_text = textToSearch;
+      }
 
       const result = await reconcileEvent(payload);
       setReconciliationResult(result);
@@ -157,16 +177,20 @@ export default function ReconciliationPage({ onNavigate }) {
     setSelectedEventId('');
     setRawText(sc.text);
     setDisciplineFilter('ALL');
-    handleReconcile(sc.text, '', weights);
+    handleReconcile(sc.text, null, weights);
   };
 
   const selectIngestedEvent = (e) => {
     const evtId = e.target.value;
     setSelectedEventId(evtId);
-    const found = ingestedEvents.find(ev => ev.id === evtId);
-    if (found) {
-      setRawText(found.raw_text || '');
-      handleReconcile(found.raw_text, evtId, weights);
+    if (evtId) {
+      setActiveEventId(evtId);
+      const found = ingestedEvents.find(ev => ev.id === evtId);
+      if (found) {
+        setActiveEvent(found);
+        setRawText(found.raw_text || '');
+        handleReconcile(null, evtId, weights);
+      }
     }
   };
 
@@ -237,12 +261,56 @@ export default function ReconciliationPage({ onNavigate }) {
         </div>
       </div>
 
+      {/* Active Event Banner (If Active Event Set) */}
+      {activeEventId && (
+        <div className="bg-[#1A1A1A] border border-[#D4AF37]/40 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#D4AF37]">
+              <Target className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-white">Active Reconciling Event:</span>
+                <span className="font-mono text-xs font-bold text-[#F4D06F] bg-[#0A0A0A] px-2 py-0.5 rounded border border-[#2A2A2A]">
+                  {activeEvent?.source_id || activeEventId}
+                </span>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
+                  activeEvent?.status === 'VERIFIED'
+                    ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30'
+                    : 'bg-[#3B82F6]/15 text-[#60A5FA] border border-[#3B82F6]/30'
+                }`}>
+                  {activeEvent?.status || 'EXTRACTED'}
+                </span>
+              </div>
+              <p className="text-[11px] text-[#A3A3A3] mt-0.5 font-sans">
+                {activeEvent?.activity_description ? (
+                  <span>Extracted: <strong className="text-[#EAEAEA]">{activeEvent.activity_description}</strong> • {activeEvent.discipline || 'General'} • {activeEvent.location || 'Site Wide'}</span>
+                ) : (
+                  <span>Raw evidence loaded from database ledger</span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-center">
+            <button
+              onClick={() => handleReconcile(null, activeEventId, weights)}
+              disabled={loading}
+              className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5"
+            >
+              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+              <span>Re-evaluate Candidates</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Input & Control Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Report Text Input, Filters & Configurable Weights */}
         <div className="lg:col-span-2 space-y-4">
           <div className="panel-card p-5 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <label className="text-xs font-bold uppercase tracking-wider text-[#EAEAEA] flex items-center gap-2">
                 <FileText className="w-4 h-4 text-[#D4AF37]" />
                 <span>Field Evidence / Daily Progress Report</span>
@@ -250,16 +318,16 @@ export default function ReconciliationPage({ onNavigate }) {
 
               {ingestedEvents.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-[#A3A3A3]">Or pick ingested event:</span>
+                  <span className="text-[11px] text-[#A3A3A3]">Switch Ingested Event:</span>
                   <select 
                     value={selectedEventId} 
                     onChange={selectIngestedEvent}
-                    className="bg-[#0A0A0A] text-xs text-[#EAEAEA] border border-[#2A2A2A] rounded-lg px-2.5 py-1 max-w-[200px] truncate focus:border-[#D4AF37] focus:outline-none"
+                    className="bg-[#0A0A0A] text-xs text-[#EAEAEA] border border-[#2A2A2A] rounded-lg px-2.5 py-1 max-w-[220px] truncate focus:border-[#D4AF37] focus:outline-none"
                   >
-                    <option value="">-- Choose Event --</option>
+                    <option value="">-- Manual Text / Preset --</option>
                     {ingestedEvents.map(ev => (
                       <option key={ev.id} value={ev.id}>
-                        {ev.id} ({ev.source_id || 'Direct'})
+                        {ev.source_id || ev.id} ({ev.discipline || 'DPR'})
                       </option>
                     ))}
                   </select>
@@ -472,7 +540,7 @@ export default function ReconciliationPage({ onNavigate }) {
               <span className="text-[10px] text-[#A3A3A3]">5 Scenarios</span>
             </div>
             <p className="text-[11px] text-[#A3A3A3]">
-              Click any scenario below to evaluate multi-signal scoring against active schedule:
+              Optional quick test cases to evaluate multi-signal scoring against active schedule:
             </p>
 
             <div className="space-y-2 pt-1">
@@ -805,4 +873,3 @@ export default function ReconciliationPage({ onNavigate }) {
     </div>
   );
 }
-

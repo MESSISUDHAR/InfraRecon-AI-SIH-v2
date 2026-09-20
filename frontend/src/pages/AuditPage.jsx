@@ -29,8 +29,10 @@ import {
   Cpu
 } from 'lucide-react';
 import { getAuditLogs, getAuditLogDetail, getAuditStats, getProjects } from '../services/api';
+import { useActiveEvent } from '../context/EventContext';
 
 export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
+  const { activeEventId, setActiveEventId } = useActiveEvent();
   const [projectId, setProjectId] = useState(initialProjectId);
   const [projectsList, setProjectsList] = useState([]);
   const [logs, setLogs] = useState([]);
@@ -38,6 +40,7 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState('ALL');
+  const [filterActiveOnly, setFilterActiveOnly] = useState(false);
   const [selectedAuditId, setSelectedAuditId] = useState(null);
   const [lineageDetail, setLineageDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -107,6 +110,9 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
   };
 
   const filteredLogs = logs.filter(log => {
+    if (filterActiveOnly && activeEventId && log.event_id !== activeEventId) {
+      return false;
+    }
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
     return (
@@ -115,7 +121,8 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
       (log.source_id && log.source_id.toLowerCase().includes(term)) ||
       (log.performed_by && log.performed_by.toLowerCase().includes(term)) ||
       (log.decision_reason && log.decision_reason.toLowerCase().includes(term)) ||
-      (log.id && log.id.toLowerCase().includes(term))
+      (log.id && log.id.toLowerCase().includes(term)) ||
+      (log.event_id && log.event_id.toLowerCase().includes(term))
     );
   });
 
@@ -308,14 +315,27 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
           <Search className="w-4 h-4 text-[#A3A3A3] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search by Activity ID, Name, Source ID, Reviewer..."
+            placeholder="Search by Activity ID, Name, Source ID, Reviewer, Event ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-[#0A0A0A] border border-[#2A2A2A] rounded-xl text-xs text-[#EAEAEA] placeholder-[#555555] focus:outline-none focus:border-[#D4AF37] transition-colors font-mono"
           />
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          {activeEventId && (
+            <button
+              onClick={() => setFilterActiveOnly(!filterActiveOnly)}
+              className={`text-xs px-3 py-1.5 rounded-xl border font-bold transition-all flex items-center gap-1.5 ${
+                filterActiveOnly 
+                  ? 'bg-[#D4AF37] text-[#0A0A0A] border-[#D4AF37]' 
+                  : 'bg-[#0A0A0A] text-[#A3A3A3] border-[#2A2A2A] hover:text-[#D4AF37]'
+              }`}
+            >
+              <span>Active Event ({activeEventId})</span>
+            </button>
+          )}
+
           <div className="flex items-center gap-2 text-xs text-[#A3A3A3]">
             <Filter className="w-3.5 h-3.5 text-[#D4AF37]" />
             <span>Decision Action:</span>
@@ -347,124 +367,132 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
           <Database className="w-10 h-10 text-[#555555] mx-auto" />
           <div className="text-sm font-bold text-[#EAEAEA]">No Audit Records Found</div>
           <p className="text-xs text-[#A3A3A3] max-w-md mx-auto">
-            No audit records match the current filter criteria. Reconcile or review field events to populate the audit ledger.
+            {filterActiveOnly ? `No audit records for active event ${activeEventId}. Run reconciliation or planner review first.` : 'No audit records match the current filter criteria. Reconcile or review field events to populate the audit ledger.'}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredLogs.map((log) => (
-            <div 
-              key={log.id} 
-              className={`panel-card p-5 space-y-3 border-l-4 ${getBorderColor(log.action_type)} transition-all hover:border-[#D4AF37]/50`}
-            >
-              {/* Row Header */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-[#2A2A2A] pb-3">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  {getActionBadge(log.action_type)}
-                  {log.activity_id && (
-                    <span className="text-xs font-mono text-[#D4AF37] font-bold bg-[#D4AF37]/10 px-2.5 py-0.5 rounded-md border border-[#D4AF37]/20">
-                      {log.activity_id}
+          {filteredLogs.map((log) => {
+            const isTargetEvent = activeEventId && log.event_id === activeEventId;
+            return (
+              <div 
+                key={log.id} 
+                className={`panel-card p-5 space-y-3 border-l-4 ${getBorderColor(log.action_type)} ${isTargetEvent ? 'ring-1 ring-[#D4AF37]/60 shadow-[0_0_15px_rgba(212,175,55,0.1)]' : ''} transition-all hover:border-[#D4AF37]/50`}
+              >
+                {/* Row Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-[#2A2A2A] pb-3">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    {getActionBadge(log.action_type)}
+                    {isTargetEvent && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-[#D4AF37] text-[#0A0A0A] rounded uppercase">
+                        Active Event
+                      </span>
+                    )}
+                    {log.activity_id && (
+                      <span className="text-xs font-mono text-[#D4AF37] font-bold bg-[#D4AF37]/10 px-2.5 py-0.5 rounded-md border border-[#D4AF37]/20">
+                        {log.activity_id}
+                      </span>
+                    )}
+                    {log.activity_name && (
+                      <span className="text-xs text-[#EAEAEA] font-bold">
+                        {log.activity_name}
+                      </span>
+                    )}
+                    <span className="text-xs text-[#555555]">•</span>
+                    <span className="text-xs text-[#A3A3A3] font-mono">
+                      Event: <strong className="text-[#EAEAEA]">{log.event_id}</strong>
                     </span>
-                  )}
-                  {log.activity_name && (
-                    <span className="text-xs text-[#EAEAEA] font-bold">
-                      {log.activity_name}
-                    </span>
-                  )}
-                  <span className="text-xs text-[#555555]">•</span>
-                  <span className="text-xs text-[#A3A3A3] font-mono">
-                    Event: <strong className="text-[#EAEAEA]">{log.event_id}</strong>
-                  </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="text-xs text-[#A3A3A3] font-mono flex items-center gap-1.5">
+                      <Clock className="w-3 h-3 text-[#D4AF37]" />
+                      {formatTimestamp(log.timestamp)}
+                    </div>
+                    <button
+                      onClick={() => handleInspectLineage(log.id)}
+                      className="px-3 py-1 bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                    >
+                      <span>Inspect Lineage</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="text-xs text-[#A3A3A3] font-mono flex items-center gap-1.5">
-                    <Clock className="w-3 h-3 text-[#D4AF37]" />
-                    {formatTimestamp(log.timestamp)}
+                {/* Row Body - Key Metrics Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                  {/* Source & Evidence */}
+                  <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
+                    <div className="text-[10px] text-[#A3A3A3] uppercase font-bold flex items-center gap-1">
+                      <FileText className="w-3 h-3 text-[#D4AF37]" /> Source Evidence
+                    </div>
+                    <div className="text-[#EAEAEA] font-mono text-[11px] truncate font-medium">
+                      {log.source_id ? `${log.source_id} (${log.source_type || 'Field'})` : 'Field Report'}
+                    </div>
+                    <p className="text-[#A3A3A3] italic text-[11px] line-clamp-1 font-sans">
+                      "{log.raw_evidence_snippet || 'No raw snippet'}"
+                    </p>
                   </div>
-                  <button
-                    onClick={() => handleInspectLineage(log.id)}
-                    className="px-3 py-1 bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
-                  >
-                    <span>Inspect Lineage</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
+
+                  {/* AI Model & Extraction */}
+                  <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
+                    <div className="text-[10px] text-[#A3A3A3] uppercase font-bold flex items-center gap-1">
+                      <Cpu className="w-3 h-3 text-[#3B82F6]" /> Extraction Engine
+                    </div>
+                    <div className="text-[#EAEAEA] font-mono text-[11px] flex items-center gap-1.5">
+                      <span className="font-bold text-[#3B82F6]">{log.model_version || 'Gemini 2.5 Flash'}</span>
+                      <span className="text-[10px] text-[#A3A3A3]">({log.prompt_version || 'v1.0'})</span>
+                    </div>
+                    <p className="text-[#A3A3A3] text-[11px] truncate">
+                      Embedding: <span className="font-mono text-[#EAEAEA]">all-MiniLM-L6-v2</span>
+                    </p>
+                  </div>
+
+                  {/* Confidence & Decision */}
+                  <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
+                    <div className="text-[10px] text-[#A3A3A3] uppercase font-bold flex items-center gap-1">
+                      <Layers className="w-3 h-3 text-[#10B981]" /> Confidence & Reviewer
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-[11px] text-[#10B981]">
+                        {log.confidence !== null ? `${(log.confidence * 100).toFixed(1)}%` : 'N/A'}
+                      </span>
+                      <span className="text-[10px] text-[#A3A3A3] font-mono">
+                        By: <strong className="text-[#EAEAEA]">{log.performed_by || 'SYSTEM'}</strong>
+                      </span>
+                    </div>
+                    <p className="text-[#A3A3A3] text-[11px] truncate">
+                      Action: <span className="font-mono text-[#EAEAEA]">{log.action_type}</span>
+                    </p>
+                  </div>
+
+                  {/* State Transition */}
+                  <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
+                    <div className="text-[10px] text-[#A3A3A3] uppercase font-bold flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-[#A855F7]" /> State Transition
+                    </div>
+                    <div className="text-[#EAEAEA] font-mono text-[11px]">
+                      Progress: <span className="text-[#A3A3A3]">{log.previous_state?.actual_progress !== undefined ? `${log.previous_state.actual_progress}%` : '0%'}</span>
+                      {' '}→{' '}
+                      <span className="text-[#10B981] font-bold">{log.new_state?.actual_progress !== undefined ? `${log.new_state.actual_progress}%` : 'Updated'}</span>
+                    </div>
+                    <p className="text-[#A3A3A3] text-[11px] truncate">
+                      Status: <span className="font-medium text-[#EAEAEA]">{log.new_state?.status || 'VERIFIED'}</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Rationale Footer */}
+                <div className="text-xs text-[#A3A3A3] bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] flex items-start gap-2.5">
+                  <Info className="w-3.5 h-3.5 text-[#D4AF37] shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-[#D4AF37] font-semibold">Reconciliation Rationale: </strong>
+                    <span>{log.decision_reason || 'Reconciliation match recorded.'}</span>
+                  </div>
                 </div>
               </div>
-
-              {/* Row Body - Key Metrics Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-                {/* Source & Evidence */}
-                <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
-                  <div className="text-[10px] text-[#A3A3A3] uppercase font-bold flex items-center gap-1">
-                    <FileText className="w-3 h-3 text-[#D4AF37]" /> Source Evidence
-                  </div>
-                  <div className="text-[#EAEAEA] font-mono text-[11px] truncate font-medium">
-                    {log.source_id ? `${log.source_id} (${log.source_type || 'Field'})` : 'Field Report'}
-                  </div>
-                  <p className="text-[#A3A3A3] italic text-[11px] line-clamp-1 font-sans">
-                    "{log.raw_evidence_snippet || 'No raw snippet'}"
-                  </p>
-                </div>
-
-                {/* AI Model & Extraction */}
-                <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
-                  <div className="text-[10px] text-[#A3A3A3] uppercase font-bold flex items-center gap-1">
-                    <Cpu className="w-3 h-3 text-[#3B82F6]" /> Extraction Engine
-                  </div>
-                  <div className="text-[#EAEAEA] font-mono text-[11px] flex items-center gap-1.5">
-                    <span className="font-bold text-[#3B82F6]">{log.model_version || 'Gemini 2.5 Flash'}</span>
-                    <span className="text-[10px] text-[#A3A3A3]">({log.prompt_version || 'v1.0'})</span>
-                  </div>
-                  <p className="text-[#A3A3A3] text-[11px] truncate">
-                    Embedding: <span className="font-mono text-[#EAEAEA]">all-MiniLM-L6-v2</span>
-                  </p>
-                </div>
-
-                {/* Confidence & Decision */}
-                <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
-                  <div className="text-[10px] text-[#A3A3A3] uppercase font-bold flex items-center gap-1">
-                    <Layers className="w-3 h-3 text-[#10B981]" /> Confidence & Reviewer
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-[11px] text-[#10B981]">
-                      {log.confidence !== null ? `${(log.confidence * 100).toFixed(1)}%` : 'N/A'}
-                    </span>
-                    <span className="text-[10px] text-[#A3A3A3] font-mono">
-                      By: <strong className="text-[#EAEAEA]">{log.performed_by || 'SYSTEM'}</strong>
-                    </span>
-                  </div>
-                  <p className="text-[#A3A3A3] text-[11px] truncate">
-                    Action: <span className="font-mono text-[#EAEAEA]">{log.action_type}</span>
-                  </p>
-                </div>
-
-                {/* State Transition */}
-                <div className="bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] space-y-1">
-                  <div className="text-[10px] text-[#A3A3A3] uppercase font-bold flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3 text-[#A855F7]" /> State Transition
-                  </div>
-                  <div className="text-[#EAEAEA] font-mono text-[11px]">
-                    Progress: <span className="text-[#A3A3A3]">{log.previous_state?.actual_progress !== undefined ? `${log.previous_state.actual_progress}%` : '0%'}</span>
-                    {' '}→{' '}
-                    <span className="text-[#10B981] font-bold">{log.new_state?.actual_progress !== undefined ? `${log.new_state.actual_progress}%` : 'Updated'}</span>
-                  </div>
-                  <p className="text-[#A3A3A3] text-[11px] truncate">
-                    Status: <span className="font-medium text-[#EAEAEA]">{log.new_state?.status || 'VERIFIED'}</span>
-                  </p>
-                </div>
-              </div>
-
-              {/* Rationale Footer */}
-              <div className="text-xs text-[#A3A3A3] bg-[#0A0A0A] p-3 rounded-xl border border-[#2A2A2A] flex items-start gap-2.5">
-                <Info className="w-3.5 h-3.5 text-[#D4AF37] shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-[#D4AF37] font-semibold">Reconciliation Rationale: </strong>
-                  <span>{log.decision_reason || 'Reconciliation match recorded.'}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -970,4 +998,3 @@ export default function AuditPage({ initialProjectId = 'PRJ-REF-04' }) {
     </div>
   );
 }
-

@@ -8,8 +8,10 @@ import {
 } from '../services/api';
 import TimelineAuditDrawer from '../components/ExecutionState/TimelineAuditDrawer';
 import { Layers, Activity, RefreshCw, Sparkles, CheckCircle2, Clock, AlertTriangle, FileText, ArrowRight, ShieldCheck } from 'lucide-react';
+import { useActiveEvent } from '../context/EventContext';
 
 const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
+  const { activeEventId, activeEvent } = useActiveEvent();
   const [projectId, setProjectId] = useState(initialProjectId);
   const [projectsList, setProjectsList] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -148,6 +150,8 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
         );
     }
   };
+
+  const activeActivityId = activeEvent?.verified_activity_id || activeEvent?.extracted_data?.activity_id;
 
   return (
     <div className="p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto">
@@ -364,96 +368,106 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
                   </td>
                 </tr>
               ) : (
-                activities.map((act) => (
-                  <tr
-                    key={act.db_id}
-                    className="hover:bg-[#1A1A1A] transition-colors duration-150"
-                  >
-                    <td className="py-3 px-4">
-                      <div className="font-mono text-xs font-bold text-[#D4AF37]">
-                        {act.activity_id}
-                      </div>
-                      <div className="text-xs text-[#EAEAEA] font-medium mt-0.5 max-w-xs truncate" title={act.activity_name}>
-                        {act.activity_name}
-                      </div>
-                    </td>
-
-                    <td className="py-3 px-4">
-                      <div className="text-xs text-[#EAEAEA] font-medium">
-                        {act.discipline || 'General'}
-                      </div>
-                      <div className="text-xs text-[#A3A3A3] mt-0.5">
-                        {act.location || 'Unassigned'}
-                      </div>
-                    </td>
-
-                    <td className="py-3 px-4">
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="font-bold text-[#EAEAEA] font-mono">
-                          {act.actual_progress}%
-                        </span>
-                        <span className="text-[#A3A3A3] font-mono text-[11px]">
-                          Plan: {act.planned_progress || 0}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-[#0A0A0A] h-2 rounded-full overflow-hidden relative border border-[#2A2A2A]">
-                        <div
-                          className={`h-full transition-all duration-300 ${
-                            act.actual_progress >= 100
-                              ? 'bg-gradient-to-r from-[#10B981] to-[#34D399]'
-                              : act.is_delayed
-                              ? 'bg-gradient-to-r from-[#EF4444] to-[#F87171]'
-                              : 'bg-gradient-to-r from-[#D4AF37] to-[#F4D06F]'
-                          }`}
-                          style={{ width: `${Math.min(100, act.actual_progress)}%` }}
-                        />
-                      </div>
-                      {act.progress_variance !== null && act.progress_variance !== 0 && (
-                        <div className={`text-[10px] mt-0.5 font-mono ${act.progress_variance >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
-                          Variance: {act.progress_variance > 0 ? '+' : ''}{act.progress_variance}%
-                        </div>
-                      )}
-                    </td>
-
-                    <td className="py-3 px-4 text-xs font-mono">
-                      <div className="text-[#A3A3A3] text-[11px]">
-                        P: {act.planned_start ? act.planned_start.slice(0, 10) : '-'} → {act.planned_finish ? act.planned_finish.slice(0, 10) : '-'}
-                      </div>
-                      <div className="text-[#EAEAEA] font-medium mt-0.5">
-                        A: {act.actual_start ? act.actual_start.slice(0, 10) : 'Not Started'} → {act.actual_finish ? act.actual_finish.slice(0, 10) : (act.actual_progress > 0 ? 'In Progress' : '-')}
-                      </div>
-                    </td>
-
-                    <td className="py-3 px-4">
-                      <div className="flex flex-col gap-1">
-                        {getStatusBadge(act.status)}
-                        {act.delay_days !== null && act.delay_days > 0 && (
-                          <span className="text-[10px] text-[#EF4444] font-bold font-mono">
-                            +{act.delay_days}d delay
+                activities.map((act) => {
+                  const isHighlighted = activeActivityId && act.activity_id === activeActivityId;
+                  return (
+                    <tr
+                      key={act.db_id}
+                      className={`hover:bg-[#1A1A1A] transition-colors duration-150 ${isHighlighted ? 'bg-[#D4AF37]/10 ring-1 ring-[#D4AF37]/40' : ''}`}
+                    >
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-[#D4AF37]">
+                            {act.activity_id}
                           </span>
+                          {isHighlighted && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 bg-[#D4AF37] text-[#0A0A0A] rounded uppercase">
+                              Active Event Target
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-[#EAEAEA] font-medium mt-0.5 max-w-xs truncate" title={act.activity_name}>
+                          {act.activity_name}
+                        </div>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <div className="text-xs text-[#EAEAEA] font-medium">
+                          {act.discipline || 'General'}
+                        </div>
+                        <div className="text-xs text-[#A3A3A3] mt-0.5">
+                          {act.location || 'Unassigned'}
+                        </div>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-bold text-[#EAEAEA] font-mono">
+                            {act.actual_progress}%
+                          </span>
+                          <span className="text-[#A3A3A3] font-mono text-[11px]">
+                            Plan: {act.planned_progress || 0}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-[#0A0A0A] h-2 rounded-full overflow-hidden relative border border-[#2A2A2A]">
+                          <div
+                            className={`h-full transition-all duration-300 ${
+                              act.actual_progress >= 100
+                                ? 'bg-gradient-to-r from-[#10B981] to-[#34D399]'
+                                : act.is_delayed
+                                ? 'bg-gradient-to-r from-[#EF4444] to-[#F87171]'
+                                : 'bg-gradient-to-r from-[#D4AF37] to-[#F4D06F]'
+                            }`}
+                            style={{ width: `${Math.min(100, act.actual_progress)}%` }}
+                          />
+                        </div>
+                        {act.progress_variance !== null && act.progress_variance !== 0 && (
+                          <div className={`text-[10px] mt-0.5 font-mono ${act.progress_variance >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
+                            Variance: {act.progress_variance > 0 ? '+' : ''}{act.progress_variance}%
+                          </div>
                         )}
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="py-3 px-4 text-center">
-                      <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
-                        act.verified_observations_count > 0 ? 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30' : 'bg-[#0A0A0A] text-[#A3A3A3] border border-[#2A2A2A]'
-                      }`}>
-                        {act.verified_observations_count}
-                      </span>
-                    </td>
+                      <td className="py-3 px-4 text-xs font-mono">
+                        <div className="text-[#A3A3A3] text-[11px]">
+                          P: {act.planned_start ? act.planned_start.slice(0, 10) : '-'} → {act.planned_finish ? act.planned_finish.slice(0, 10) : '-'}
+                        </div>
+                        <div className="text-[#EAEAEA] font-medium mt-0.5">
+                          A: {act.actual_start ? act.actual_start.slice(0, 10) : 'Not Started'} → {act.actual_finish ? act.actual_finish.slice(0, 10) : (act.actual_progress > 0 ? 'In Progress' : '-')}
+                        </div>
+                      </td>
 
-                    <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => handleOpenDetail(act.activity_id)}
-                        className="btn-secondary text-xs py-1 px-3 font-medium hover:border-[#D4AF37]/60 hover:text-[#D4AF37] transition-all inline-flex items-center gap-1"
-                      >
-                        <span>Timeline & Audit</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                      <td className="py-3 px-4">
+                        <div className="flex flex-col gap-1">
+                          {getStatusBadge(act.status)}
+                          {act.delay_days !== null && act.delay_days > 0 && (
+                            <span className="text-[10px] text-[#EF4444] font-bold font-mono">
+                              +{act.delay_days}d delay
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      <td className="py-3 px-4 text-center">
+                        <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
+                          act.verified_observations_count > 0 ? 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30' : 'bg-[#0A0A0A] text-[#A3A3A3] border border-[#2A2A2A]'
+                        }`}>
+                          {act.verified_observations_count}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          onClick={() => handleOpenDetail(act.activity_id)}
+                          className="btn-secondary text-xs py-1 px-3 font-medium hover:border-[#D4AF37]/60 hover:text-[#D4AF37] transition-all inline-flex items-center gap-1"
+                        >
+                          <span>Timeline & Audit</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -475,4 +489,3 @@ const ExecutionStatePage = ({ initialProjectId = 'PRJ-REF-04' }) => {
 };
 
 export default ExecutionStatePage;
-

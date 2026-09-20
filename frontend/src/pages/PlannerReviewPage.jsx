@@ -24,7 +24,8 @@ import {
   Sliders,
   ChevronRight,
   Filter,
-  Award
+  Award,
+  Flame
 } from 'lucide-react';
 import { 
   getReviewQueue,
@@ -35,8 +36,10 @@ import {
   getConfidencePolicy,
   getProjects
 } from '../services/api';
+import { useActiveEvent } from '../context/EventContext';
 
 export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-REF-04' }) {
+  const { activeEventId, activeEvent, refreshActiveEvent } = useActiveEvent();
   const [projectId, setProjectId] = useState(initialProjectId);
   const [projectsList, setProjectsList] = useState([]);
   const [tierFilter, setTierFilter] = useState('ALL'); // ALL, HIGH, MEDIUM, LOW
@@ -78,6 +81,15 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
     loadQueue();
   }, [projectId, tierFilter]);
 
+  // Sync selectedEventId if activeEventId changes
+  useEffect(() => {
+    if (activeEventId && queueData.items.some(it => it.event_id === activeEventId)) {
+      const it = queueData.items.find(i => i.event_id === activeEventId);
+      setSelectedEventId(activeEventId);
+      setSelectedCandidateId(it?.top_candidate?.id || null);
+    }
+  }, [activeEventId, queueData.items]);
+
   const loadQueue = async () => {
     setLoading(true);
     setError(null);
@@ -88,10 +100,16 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
       });
       if (res && res.items) {
         setQueueData(res);
-        if (res.items.length > 0 && (!selectedEventId || !res.items.find(it => it.event_id === selectedEventId))) {
-          const firstItem = res.items[0];
-          setSelectedEventId(firstItem.event_id);
-          setSelectedCandidateId(firstItem.top_candidate?.id || null);
+        if (res.items.length > 0) {
+          if (activeEventId && res.items.some(it => it.event_id === activeEventId)) {
+            const activeItem = res.items.find(it => it.event_id === activeEventId);
+            setSelectedEventId(activeItem.event_id);
+            setSelectedCandidateId(activeItem.top_candidate?.id || null);
+          } else if (!selectedEventId || !res.items.find(it => it.event_id === selectedEventId)) {
+            const firstItem = res.items[0];
+            setSelectedEventId(firstItem.event_id);
+            setSelectedCandidateId(firstItem.top_candidate?.id || null);
+          }
         }
       }
     } catch (err) {
@@ -143,6 +161,10 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
       }
 
       setSuccessMsg(res.message);
+      
+      // Refresh persistent active event state
+      await refreshActiveEvent();
+
       // Reload queue
       setTimeout(() => {
         loadQueue();
@@ -168,6 +190,10 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
         reason: plannerNotes || "Unmatched / Discrepancies noted by Planner"
       });
       setSuccessMsg(res.message);
+      
+      // Refresh persistent active event state
+      await refreshActiveEvent();
+
       setTimeout(() => {
         loadQueue();
       }, 1000);
@@ -191,6 +217,7 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
         reviewer_id: "SYSTEM_AUTO_POLICY"
       });
       setSuccessMsg(res.message);
+      await refreshActiveEvent();
       loadQueue();
     } catch (err) {
       console.error('Auto-processing failed:', err);
@@ -245,6 +272,32 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
           )}
         </div>
       </div>
+
+      {/* Active Event Banner if present */}
+      {activeEventId && (
+        <div className="bg-[#111111] border border-[#D4AF37]/40 rounded-xl p-3.5 flex items-center justify-between gap-3 shadow-md">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse" />
+            <span className="text-xs text-[#A3A3A3]">Active Tracked Event:</span>
+            <span className="font-mono font-bold text-xs text-[#D4AF37] bg-[#0A0A0A] px-2 py-0.5 rounded border border-[#D4AF37]/30">
+              {activeEventId}
+            </span>
+            <span className="text-xs text-[#A3A3A3]">
+              Status: <strong className="text-[#EAEAEA] font-mono">{activeEvent?.status || 'EXTRACTED'}</strong>
+            </span>
+          </div>
+          {queueData.items.some(it => it.event_id === activeEventId) ? (
+            <span className="text-[11px] text-[#10B981] font-semibold flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Queued for Review
+            </span>
+          ) : (
+            <span className="text-[11px] text-[#A3A3A3]">
+              {activeEvent?.status === 'VERIFIED' ? '✓ Already Approved / Verified' : 'Processed or filtered out'}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Confidence Policy Filter Tabs */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2A2A2A] pb-3">
@@ -382,31 +435,40 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
         <div className="space-y-6">
           {/* Active Review Item Selector Ribbon */}
           <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
-            {queueData.items.map((it) => (
-              <div 
-                key={it.event_id}
-                onClick={() => handleSelectEvent(it)}
-                className={`p-3.5 rounded-xl border text-xs cursor-pointer transition-all shrink-0 min-w-[240px] ${
-                  selectedEventId === it.event_id 
-                    ? 'bg-[#111111] border-[#D4AF37] ring-1 ring-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.15)]' 
-                    : 'bg-[#111111] border-[#2A2A2A] hover:border-[#D4AF37]/40'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono font-bold text-[#D4AF37]">{it.event_id}</span>
-                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                    it.confidence_tier === 'HIGH' ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30' :
-                    it.confidence_tier === 'MEDIUM' ? 'bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30' :
-                    'bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/30'
-                  }`}>
-                    {Math.round(it.final_confidence * 100)}% ({it.confidence_tier})
-                  </span>
+            {queueData.items.map((it) => {
+              const isSelected = selectedEventId === it.event_id;
+              const isGlobalActive = activeEventId === it.event_id;
+              return (
+                <div 
+                  key={it.event_id}
+                  onClick={() => handleSelectEvent(it)}
+                  className={`p-3.5 rounded-xl border text-xs cursor-pointer transition-all shrink-0 min-w-[240px] relative ${
+                    isSelected 
+                      ? 'bg-[#111111] border-[#D4AF37] ring-1 ring-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.15)]' 
+                      : 'bg-[#111111] border-[#2A2A2A] hover:border-[#D4AF37]/40'
+                  }`}
+                >
+                  {isGlobalActive && (
+                    <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.2 bg-[#D4AF37] text-[#0A0A0A] font-bold text-[9px] rounded-full uppercase tracking-wider">
+                      Active
+                    </span>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono font-bold text-[#D4AF37]">{it.event_id}</span>
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                      it.confidence_tier === 'HIGH' ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30' :
+                      it.confidence_tier === 'MEDIUM' ? 'bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30' :
+                      'bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/30'
+                    }`}>
+                      {Math.round(it.final_confidence * 100)}% ({it.confidence_tier})
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-[#A3A3A3] mt-1.5 truncate font-medium">
+                    {it.extracted_facts?.activity_description || it.raw_text}
+                  </div>
                 </div>
-                <div className="text-[11px] text-[#A3A3A3] mt-1.5 truncate font-medium">
-                  {it.extracted_facts?.activity_description || it.raw_text}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Active Item Context Alert */}
@@ -655,4 +717,3 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
     </div>
   );
 }
-
