@@ -25,7 +25,10 @@ import {
   ChevronRight,
   Filter,
   Award,
-  Flame
+  Flame,
+  History,
+  BookOpen,
+  CheckCheck
 } from 'lucide-react';
 import { 
   getReviewQueue,
@@ -34,7 +37,8 @@ import {
   rejectReviewMatch,
   autoProcessReviewQueue,
   getConfidencePolicy,
-  getProjects
+  getProjects,
+  getHistoricalMemoryForEvent
 } from '../services/api';
 import { useActiveEvent } from '../context/EventContext';
 
@@ -63,6 +67,10 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
   const [plannerNotes, setPlannerNotes] = useState('');
   const [overrideProgress, setOverrideProgress] = useState('');
 
+  // Phase 4: Institutional Memory State
+  const [historicalMemory, setHistoricalMemory] = useState(null);
+  const [historicalLoading, setHistoricalLoading] = useState(false);
+
   useEffect(() => {
     const loadProjects = async () => {
       try {
@@ -89,6 +97,35 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
       setSelectedCandidateId(it?.top_candidate?.id || null);
     }
   }, [activeEventId, queueData.items]);
+
+  const loadHistoricalMemory = async (eventId) => {
+    if (!eventId) {
+      setHistoricalMemory(null);
+      return;
+    }
+    setHistoricalLoading(true);
+    try {
+      const res = await getHistoricalMemoryForEvent(eventId, { top_k: 4, min_similarity: 0.40 });
+      if (res && res.success) {
+        setHistoricalMemory(res);
+      } else {
+        setHistoricalMemory(null);
+      }
+    } catch (err) {
+      console.warn('Failed to load historical memory:', err);
+      setHistoricalMemory(null);
+    } finally {
+      setHistoricalLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedEventId) {
+      loadHistoricalMemory(selectedEventId);
+    } else {
+      setHistoricalMemory(null);
+    }
+  }, [selectedEventId]);
 
   const loadQueue = async () => {
     setLoading(true);
@@ -710,6 +747,164 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Phase 4: Institutional Memory / Historical Execution Intelligence Panel */}
+          {currentItem && (
+            <div className="panel-card p-6 space-y-5 border-l-4 border-l-[#D4AF37] shadow-lg">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#2A2A2A] pb-3.5">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-[#111111] border border-[#D4AF37]/30 rounded-xl text-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.15)]">
+                    <BookOpen className="w-5 h-5 text-[#D4AF37]" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base font-bold text-[#EAEAEA] tracking-tight">
+                        Institutional Memory — Verified Historical Intelligence
+                      </h2>
+                      <span className="text-[10px] font-mono px-2 py-0.5 bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 rounded-full font-bold">
+                        PHASE 4
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#A3A3A3] mt-0.5">
+                      Past verified execution outcomes, actual durations, delay causes, and evidence matching current scope.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-[#A3A3A3] bg-[#0A0A0A] px-2.5 py-1 rounded-lg border border-[#2A2A2A] font-mono">
+                    Status: <strong className="text-[#10B981]">VERIFIED Records Only</strong>
+                  </span>
+                </div>
+              </div>
+
+              {/* Historical Delay Summary Banner */}
+              {historicalMemory?.historical_delay_summary && (
+                <div className="p-3.5 bg-[#0A0A0A] border border-[#D4AF37]/40 rounded-xl flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <Sparkles className="w-4 h-4 text-[#D4AF37] shrink-0" />
+                    <span className="text-[#EAEAEA] font-medium">
+                      {historicalMemory.historical_delay_summary}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-[#A3A3A3] font-mono shrink-0">
+                    Descriptive Evidence (No Predictions)
+                  </span>
+                </div>
+              )}
+
+              {/* Loading State */}
+              {historicalLoading ? (
+                <div className="p-8 text-center text-[#A3A3A3] text-xs flex items-center justify-center gap-2">
+                  <RefreshCw className="w-4 h-4 animate-spin text-[#D4AF37]" />
+                  <span>Searching institutional memory for verified historical executions...</span>
+                </div>
+              ) : (!historicalMemory?.results || historicalMemory.results.length === 0) ? (
+                /* Empty State */
+                <div className="p-8 bg-[#0A0A0A] rounded-xl border border-[#2A2A2A] text-center space-y-2">
+                  <History className="w-8 h-8 text-[#6b6b6b] mx-auto" />
+                  <h4 className="text-xs font-bold text-[#EAEAEA]">No relevant verified historical evidence found</h4>
+                  <p className="text-[11px] text-[#A3A3A3] max-w-md mx-auto">
+                    No past approved execution events across previous projects matched this scope above the relevance threshold. Only planner-approved, verified events qualify as institutional memory.
+                  </p>
+                </div>
+              ) : (
+                /* Historical Results Grid */
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {historicalMemory.results.map((hist, idx) => (
+                    <div 
+                      key={hist.historical_event_id || idx}
+                      className="bg-[#0A0A0A] border border-[#2A2A2A] hover:border-[#D4AF37]/40 rounded-xl p-4 space-y-3 transition-all"
+                    >
+                      {/* Card Header: Source Project & Similarity */}
+                      <div className="flex items-center justify-between gap-2 border-b border-[#2A2A2A] pb-2.5">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                            hist.is_same_project 
+                              ? 'bg-blue-500/15 text-blue-400 border-blue-500/30' 
+                              : 'bg-[#D4AF37]/15 text-[#D4AF37] border-[#D4AF37]/30'
+                          }`}>
+                            {hist.project_id}
+                          </span>
+                          <span className="text-xs text-[#EAEAEA] font-semibold truncate max-w-[180px]">
+                            {hist.project_name || hist.project_id}
+                          </span>
+                        </div>
+
+                        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30">
+                          {Math.round(hist.similarity * 100)}% Similarity
+                        </span>
+                      </div>
+
+                      {/* Activity Description */}
+                      <div>
+                        <div className="text-xs font-bold text-white">
+                          {hist.activity_name || hist.description}
+                        </div>
+                        <div className="text-[11px] text-[#A3A3A3] mt-0.5 line-clamp-2 italic">
+                          "{hist.raw_text}"
+                        </div>
+                      </div>
+
+                      {/* Verified Metrics Row */}
+                      <div className="grid grid-cols-3 gap-2 text-[11px] bg-[#111111] p-2.5 rounded-lg border border-[#2A2A2A]">
+                        <div>
+                          <span className="text-[#A3A3A3] block text-[10px]">Verified Progress</span>
+                          <span className="font-mono font-bold text-[#10B981]">{hist.actual_progress || 100}%</span>
+                        </div>
+                        <div>
+                          <span className="text-[#A3A3A3] block text-[10px]">Actual Duration</span>
+                          <span className="font-mono font-bold text-[#EAEAEA]">
+                            {hist.duration_days ? `${hist.duration_days} days` : 'Standard'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[#A3A3A3] block text-[10px]">Discipline</span>
+                          <span className="font-medium text-[#D4AF37] truncate block">{hist.discipline || 'General'}</span>
+                        </div>
+                      </div>
+
+                      {/* Delay Outcome */}
+                      <div className="text-xs flex items-center justify-between gap-2">
+                        <span className="text-[#A3A3A3] text-[11px]">Recorded Delay:</span>
+                        {hist.delay_reason && hist.delay_reason.toLowerCase() !== 'none' ? (
+                          <span className="text-[#EF4444] font-semibold text-[11px] flex items-center gap-1 bg-[#EF4444]/10 px-2 py-0.5 rounded border border-[#EF4444]/20">
+                            <AlertTriangle className="w-3 h-3 shrink-0" />
+                            <span className="truncate max-w-[200px]">{hist.delay_reason}</span>
+                          </span>
+                        ) : (
+                          <span className="text-[#10B981] font-medium text-[11px] flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>On Schedule (No delay recorded)</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Matched Signals */}
+                      {hist.matched_signals?.length > 0 && (
+                        <div className="space-y-1 pt-1 border-t border-[#2A2A2A]">
+                          <span className="text-[10px] text-[#A3A3A3] uppercase tracking-wider font-semibold">Matched Signals:</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {hist.matched_signals.slice(0, 3).map((sig, sIdx) => (
+                              <span key={sIdx} className="text-[10px] bg-[#111111] text-[#EAEAEA] px-2 py-0.5 rounded border border-[#2A2A2A]">
+                                ✓ {sig}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Verification Provenance Footer */}
+                      <div className="flex items-center justify-between text-[10px] text-[#6b6b6b] pt-1">
+                        <span>Verified: {hist.verification_timestamp || 'Historical'}</span>
+                        <span>Reviewer: {hist.reviewer_id || 'PLANNER'}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

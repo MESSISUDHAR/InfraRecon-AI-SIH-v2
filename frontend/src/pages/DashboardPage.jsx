@@ -27,7 +27,9 @@ import {
   Link as LinkIcon,
   AlertOctagon,
   ArrowRightCircle,
-  Maximize2
+  Maximize2,
+  BookOpen,
+  History
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -48,7 +50,8 @@ import {
   getDashboardSummary,
   getDependencyImpactSummary,
   getActivityDependencyDetail,
-  getProjects
+  getProjects,
+  getHistoricalMemoryStats
 } from '../services/api';
 
 export default function DashboardPage({ onNavigate, initialProjectId = 'PRJ-REF-04' }) {
@@ -56,6 +59,7 @@ export default function DashboardPage({ onNavigate, initialProjectId = 'PRJ-REF-
   const [projectsList, setProjectsList] = useState([]);
   const [data, setData] = useState(null);
   const [dependencyData, setDependencyData] = useState(null);
+  const [historicalStats, setHistoricalStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [delayedSearch, setDelayedSearch] = useState('');
@@ -88,10 +92,14 @@ export default function DashboardPage({ onNavigate, initialProjectId = 'PRJ-REF-
     else setLoading(true);
     setError(null);
     try {
-      const [res, depRes] = await Promise.all([
+      const [res, depRes, histRes] = await Promise.all([
         getDashboardSummary(projectId),
         getDependencyImpactSummary(projectId).catch(e => {
           console.warn('Dependency impact load failed:', e);
+          return null;
+        }),
+        getHistoricalMemoryStats().catch(e => {
+          console.warn('Historical memory stats load failed:', e);
           return null;
         })
       ]);
@@ -101,6 +109,9 @@ export default function DashboardPage({ onNavigate, initialProjectId = 'PRJ-REF-
       }
       if (depRes && depRes.success) {
         setDependencyData(depRes.data);
+      }
+      if (histRes && histRes.success) {
+        setHistoricalStats(histRes);
       }
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
@@ -1143,6 +1154,98 @@ export default function DashboardPage({ onNavigate, initialProjectId = 'PRJ-REF-
           </div>
         </div>
       )}
+
+      {/* PHASE 4: Institutional Memory & Historical Execution Knowledge */}
+      <div className="panel-card p-6 space-y-5 border-l-4 border-l-[#D4AF37]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#2A2A2A] pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-[#111111] border border-[#D4AF37]/30 rounded-xl text-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.15)]">
+              <BookOpen className="w-5 h-5 text-[#D4AF37]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-white tracking-tight">
+                  Institutional Memory & Historical Execution Knowledge
+                </h2>
+                <span className="text-[10px] font-mono px-2 py-0.5 bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 rounded-full font-bold">
+                  Phase 4 Active
+                </span>
+              </div>
+              <p className="text-xs text-[#A3A3A3] mt-0.5">
+                Multi-project repository of planner-verified execution events, empirical durations, and recorded root cause delays.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[#A3A3A3] font-mono bg-[#0A0A0A] px-2.5 py-1 rounded border border-[#2A2A2A]">
+              Source: <strong className="text-[#10B981]">Database Verified Records</strong>
+            </span>
+          </div>
+        </div>
+
+        {/* 4 Historical Metrics Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="p-3.5 bg-[#0A0A0A] rounded-lg border border-[#2A2A2A]">
+            <div className="text-[11px] text-[#A3A3A3] font-medium uppercase tracking-wider">Verified History Events</div>
+            <div className="text-xl font-bold font-mono text-white mt-1">
+              {historicalStats?.total_verified_historical_events ?? 0}
+            </div>
+            <div className="text-[10px] text-[#A3A3A3] mt-0.5">Approved & grounded milestones</div>
+          </div>
+
+          <div className="p-3.5 bg-[#0A0A0A] rounded-lg border border-[#2A2A2A]">
+            <div className="text-[11px] text-[#A3A3A3] font-medium uppercase tracking-wider">Historical Projects</div>
+            <div className="text-xl font-bold font-mono text-[#D4AF37] mt-1">
+              {historicalStats?.projects_count ?? 0}
+            </div>
+            <div className="text-[10px] text-[#A3A3A3] mt-0.5">Cross-project knowledge base</div>
+          </div>
+
+          <div className="p-3.5 bg-[#0A0A0A] rounded-lg border border-[#2A2A2A]">
+            <div className="text-[11px] text-[#A3A3A3] font-medium uppercase tracking-wider">Historical Delay Incidence</div>
+            <div className="text-xl font-bold font-mono text-[#EF4444] mt-1">
+              {historicalStats?.delay_incidence_rate ?? 0}%
+            </div>
+            <div className="text-[10px] text-[#A3A3A3] mt-0.5">
+              {historicalStats?.verified_events_with_delays ?? 0} of {historicalStats?.total_verified_historical_events ?? 0} experienced delays
+            </div>
+          </div>
+
+          <div className="p-3.5 bg-[#0A0A0A] rounded-lg border border-[#2A2A2A]">
+            <div className="text-[11px] text-[#A3A3A3] font-medium uppercase tracking-wider">Disciplines Covered</div>
+            <div className="text-xl font-bold font-mono text-[#10B981] mt-1">
+              {historicalStats?.disciplines_count ?? 0}
+            </div>
+            <div className="text-[10px] text-[#A3A3A3] mt-0.5">Civil, Piping, Mech, Elec, etc.</div>
+          </div>
+        </div>
+
+        {/* Most Frequent Verified Delay Reasons */}
+        {historicalStats?.top_delay_reasons?.length > 0 && (
+          <div className="space-y-2 pt-1 border-t border-[#2A2A2A]">
+            <div className="text-xs font-bold text-[#EAEAEA] flex items-center justify-between">
+              <span>Most Common Verified Historical Delay Root Causes:</span>
+              <span className="text-[10px] text-[#A3A3A3] font-normal">Empirical occurrences across verified projects</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+              {historicalStats.top_delay_reasons.map((r, idx) => (
+                <div key={idx} className="p-2.5 bg-[#0A0A0A] rounded-lg border border-[#2A2A2A] flex items-center justify-between gap-2 text-xs">
+                  <div className="truncate">
+                    <div className="text-[#EAEAEA] font-medium truncate text-[11px]">{r.reason}</div>
+                    <div className="text-[10px] text-[#A3A3A3] truncate">
+                      {r.disciplines?.join(', ') || 'General'}
+                    </div>
+                  </div>
+                  <span className="font-mono font-bold text-[#EF4444] bg-[#EF4444]/10 px-2 py-0.5 rounded border border-[#EF4444]/20 shrink-0 text-[11px]">
+                    {r.count} {r.count === 1 ? 'event' : 'events'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Interactive CPM Dependency Inspection Modal */}
       {depModalOpen && (

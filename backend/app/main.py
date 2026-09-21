@@ -16,13 +16,21 @@ from app.api import (
     state_router,
     dashboard_router,
     audit_router,
-    dependencies_router
+    dependencies_router,
+    historical_memory_router
 )
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize database tables on startup
     init_db()
+    try:
+        from app.database import SessionLocal
+        from app.services.historical_memory_service import seed_demo_historical_memory
+        with SessionLocal() as db:
+            seed_demo_historical_memory(db)
+    except Exception:
+        pass
     yield
 
 app = FastAPI(
@@ -56,6 +64,7 @@ app.include_router(state_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")
 app.include_router(audit_router, prefix="/api")
 app.include_router(dependencies_router, prefix="/api")
+app.include_router(historical_memory_router, prefix="/api")
 
 
 @app.get("/")

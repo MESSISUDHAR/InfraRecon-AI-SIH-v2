@@ -261,6 +261,27 @@ export const getDependencyStatus = async () => {
   return response.data;
 };
 
+// Phase 4: Institutional Memory / Historical Execution Intelligence APIs
+export const getHistoricalMemoryForEvent = async (eventId, params = {}) => {
+  const response = await api.get(`/historical-memory/${eventId}`, { params });
+  return response.data;
+};
+
+export const searchHistoricalMemory = async (payload) => {
+  const response = await api.post('/historical-memory/search', payload);
+  return response.data;
+};
+
+export const getHistoricalMemoryStats = async () => {
+  const response = await api.get('/historical-memory/stats');
+  return response.data;
+};
+
+export const seedHistoricalMemoryDemo = async () => {
+  const response = await api.post('/historical-memory/seed-demo');
+  return response.data;
+};
+
 export default api;
 
 
