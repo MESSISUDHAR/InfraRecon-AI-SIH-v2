@@ -28,7 +28,8 @@ import {
   Flame,
   History,
   BookOpen,
-  CheckCheck
+  CheckCheck,
+  Mic
 } from 'lucide-react';
 import { 
   getReviewQueue,
@@ -491,7 +492,15 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
                     </span>
                   )}
                   <div className="flex items-center justify-between">
-                    <span className="font-mono font-bold text-[#D4AF37]">{it.event_id}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono font-bold text-[#D4AF37]">{it.event_id}</span>
+                      {(it.source_type === 'VOICE' || it.event_id?.startsWith('VOICE')) && (
+                        <span className="px-1.5 py-0.2 rounded bg-[#D4AF37]/20 text-[#F4D06F] border border-[#D4AF37]/40 text-[9px] font-sans font-bold flex items-center gap-0.5" title="Voice Field Input">
+                          <Mic className="w-2.5 h-2.5" />
+                          <span>VOICE</span>
+                        </span>
+                      )}
+                    </div>
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
                       it.confidence_tier === 'HIGH' ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30' :
                       it.confidence_tier === 'MEDIUM' ? 'bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30' :
@@ -555,12 +564,24 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
                 <div className="space-y-3">
                   <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-2.5">
                     <span className="text-xs font-bold uppercase tracking-wider text-[#EAEAEA] flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-[#D4AF37]" />
+                      {currentItem.source_type === 'VOICE' ? (
+                        <Mic className="w-3.5 h-3.5 text-[#D4AF37]" />
+                      ) : (
+                        <FileText className="w-3.5 h-3.5 text-[#D4AF37]" />
+                      )}
                       <span>1. Original Raw Evidence</span>
                     </span>
-                    <span className="text-[10px] text-[#A3A3A3] font-mono bg-[#0A0A0A] px-2 py-0.5 rounded border border-[#2A2A2A]">
-                      {currentItem.source_id || 'DIRECT_INPUT'}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {currentItem.source_type === 'VOICE' && (
+                        <span className="text-[10px] font-bold text-[#F4D06F] bg-[#D4AF37]/15 border border-[#D4AF37]/40 px-2 py-0.5 rounded flex items-center gap-1">
+                          <Mic className="w-2.5 h-2.5 text-[#D4AF37]" />
+                          <span>Voice Input</span>
+                        </span>
+                      )}
+                      <span className="text-[10px] text-[#A3A3A3] font-mono bg-[#0A0A0A] px-2 py-0.5 rounded border border-[#2A2A2A]">
+                        {currentItem.source_id || 'DIRECT_INPUT'}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="p-3.5 bg-[#0A0A0A] border border-[#2A2A2A] rounded-xl text-xs font-sans text-[#EAEAEA] leading-relaxed italic">
@@ -570,7 +591,16 @@ export default function PlannerReviewPage({ onNavigate, initialProjectId = 'PRJ-
                   <div className="space-y-1.5 text-xs text-[#A3A3A3]">
                     <div className="flex justify-between py-1 border-b border-[#2A2A2A]">
                       <span>Source Reference:</span>
-                      <span className="text-[#EAEAEA] font-medium">{currentItem.source_type || 'Field Report'}</span>
+                      <span className="text-[#EAEAEA] font-medium flex items-center gap-1">
+                        {currentItem.source_type === 'VOICE' ? (
+                          <span className="text-[#F4D06F] flex items-center gap-1 font-semibold">
+                            <Mic className="w-3 h-3 text-[#D4AF37]" />
+                            <span>VOICE (Supervisor Microphone Capture)</span>
+                          </span>
+                        ) : (
+                          <span>{currentItem.source_type || 'Field Report'}</span>
+                        )}
+                      </span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-[#2A2A2A]">
                       <span>Reporter Name:</span>

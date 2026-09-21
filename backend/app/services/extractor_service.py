@@ -96,6 +96,10 @@ def heuristic_fallback_extractor(raw_text: str) -> ExtractedExecutionData:
     asset_match = re.search(r"(?:asset|equipment|tag|tag#)\s+([A-Za-z0-9\-_]+)", text, re.IGNORECASE)
     if asset_match:
         asset_id = asset_match.group(1)
+    else:
+        equip_tag_match = re.search(r"\b(?:pump|compressor|turbine|generator|motor|vessel|tank)\s+([A-Za-z]{1,4}-\d+[A-Za-z]?|[A-Za-z]\d{2,4})\b", text, re.IGNORECASE)
+        if equip_tag_match:
+            asset_id = equip_tag_match.group(1)
 
     # 4. Detect Location (grounded only)
     location = None
@@ -106,7 +110,7 @@ def heuristic_fallback_extractor(raw_text: str) -> ExtractedExecutionData:
         location = "PR-04"
     elif "Zone 3" in text:
         location = "Zone 3"
-    elif "Compressor Bay 2" in text:
+    elif "Compressor Bay 2" in text or re.search(r"second\s+compressor|compressor\s+(?:bay\s+2|unit\s+2|unit\s+pad)", text, re.IGNORECASE):
         location = "Compressor Bay 2"
     elif "Level 2" in text:
         location = "Level 2"

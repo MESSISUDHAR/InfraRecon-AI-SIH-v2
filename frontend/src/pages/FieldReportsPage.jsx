@@ -26,7 +26,13 @@ import {
   Zap,
   Check,
   CheckCheck,
-  Target
+  Target,
+  Mic,
+  MicOff,
+  Volume2,
+  Edit3,
+  Square,
+  Radio
 } from 'lucide-react';
 import { 
   submitExecutionEvent, 
@@ -91,6 +97,13 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
   const [projectId, setProjectId] = useState(initialProjectId);
   const [projectsList, setProjectsList] = useState([]);
   
+  // Field Capture Mode: 'TEXT' | 'VOICE'
+  const [captureMode, setCaptureMode] = useState('TEXT');
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState('idle'); // 'idle' | 'listening' | 'stopped' | 'error' | 'unsupported'
+  const [voiceError, setVoiceError] = useState(null);
+  const recognitionRef = useRef(null);
+
   // Form State
   const [inputText, setInputText] = useState(SAMPLE_DPRS[0].text);
   const [sourceId, setSourceId] = useState(SAMPLE_DPRS[0].sourceId);
@@ -240,6 +253,113 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
   useEffect(() => {
     fetchReports();
   }, [projectId, filterSourceType, filterStatus, searchTerm]);
+
+  // Clean up speech recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {}
+      }
+    };
+  }, []);
+
+  // Web Speech API: Start Voice Recording
+  const startVoiceRecording = () => {
+    setVoiceError(null);
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setVoiceStatus('unsupported');
+      setVoiceError('Voice capture is not supported in this browser. Please use text capture or load demo speech.');
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        setIsRecording(true);
+        setVoiceStatus('listening');
+      };
+
+      recognition.onresult = (event) => {
+        let currentTranscript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          currentTranscript += event.results[i][0].transcript + ' ';
+        }
+        setInputText(currentTranscript.trim());
+      };
+
+      recognition.onerror = (event) => {
+        console.warn('Speech recognition error:', event.error);
+        if (event.error === 'not-allowed') {
+          setVoiceStatus('error');
+          setVoiceError('Microphone permission is required for voice capture. Please allow microphone access in your browser settings.');
+        } else if (event.error === 'no-speech') {
+          setVoiceStatus('error');
+          setVoiceError('No speech detected. Please speak clearly into your microphone.');
+        } else {
+          setVoiceStatus('error');
+          setVoiceError(`Voice capture error (${event.error}). You can edit the transcript manually or use text input.`);
+        }
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+        setVoiceStatus('stopped');
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+      setSourceType('VOICE');
+    } catch (err) {
+      console.error('Failed to start speech recognition:', err);
+      setVoiceStatus('error');
+      setVoiceError('Could not start microphone. Please check browser permissions.');
+      setIsRecording(false);
+    }
+  };
+
+  // Stop Voice Recording
+  const stopVoiceRecording = () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
+    }
+    setIsRecording(false);
+    setVoiceStatus('stopped');
+  };
+
+  // Clear Voice Transcript
+  const handleClearTranscript = () => {
+    setInputText('');
+    setVoiceStatus('idle');
+    setVoiceError(null);
+    if (isRecording) {
+      stopVoiceRecording();
+    }
+  };
+
+  // Load Voice Demo Scenario (for testing or environments without mic)
+  const handleLoadVoiceDemo = () => {
+    clearActiveEvent();
+    setInputText("Yesterday we completed alignment of pump P-101. Work is being checked by the supervisor.");
+    setSourceType("VOICE");
+    setSourceId(`VOICE-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-01`);
+    setReporterName("Supervisor Sharma (Voice)");
+    setVoiceStatus('stopped');
+    setVoiceError(null);
+    setFeedback({
+      type: 'success',
+      message: 'Loaded voice field audio transcript. You can edit the words below before running structured extraction.'
+    });
+  };
 
   // Handle Preset Quick Selection
   const handleSelectPreset = (sample) => {
@@ -585,16 +705,149 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
 
       {/* Main Extraction Workspace (Raw Input -> Gemini Extraction -> Structured Schema) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Card: Raw Field Report Entry */}
+        {/* Left Card: Raw Field Report Entry (Text + Voice Dual Capture) */}
         <div className="panel-card p-6 space-y-4 flex flex-col justify-between">
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-3">
+            {/* Header & Mode Selector Tabs */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#2A2A2A] pb-3 gap-2">
               <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#D4AF37]" />
-                <span>1. Raw Field Report / DPR Entry</span>
+                {captureMode === 'VOICE' ? (
+                  <Mic className="w-4 h-4 text-[#D4AF37]" />
+                ) : (
+                  <FileText className="w-4 h-4 text-[#D4AF37]" />
+                )}
+                <span>1. {captureMode === 'VOICE' ? 'Voice-Based Field Capture' : 'Raw Field Report / DPR Entry'}</span>
               </h2>
-              <span className="text-[11px] text-[#A3A3A3] font-mono">Stage: Raw Observation</span>
+              
+              {/* Dual Mode Switcher Tabs */}
+              <div className="flex items-center bg-[#0A0A0A] p-0.5 rounded-lg border border-[#2A2A2A]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCaptureMode('TEXT');
+                    if (sourceType === 'VOICE') setSourceType('DPR_TEXT');
+                  }}
+                  className={`px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    captureMode === 'TEXT'
+                      ? 'bg-[#D4AF37] text-black shadow'
+                      : 'text-[#A3A3A3] hover:text-white'
+                  }`}
+                >
+                  <FileText className="w-3 h-3" />
+                  <span>Text DPR</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCaptureMode('VOICE');
+                    setSourceType('VOICE');
+                    if (!sourceId.startsWith('VOICE-')) {
+                      setSourceId(`VOICE-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-01`);
+                    }
+                  }}
+                  className={`px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    captureMode === 'VOICE'
+                      ? 'bg-[#D4AF37] text-black shadow'
+                      : 'text-[#A3A3A3] hover:text-white'
+                  }`}
+                >
+                  <Mic className="w-3 h-3" />
+                  <span>Voice Update</span>
+                  {isRecording && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping" />
+                  )}
+                </button>
+              </div>
             </div>
+
+            {/* Voice Capture Controls (When in Voice Mode) */}
+            {captureMode === 'VOICE' && (
+              <div className="bg-[#0A0A0A] border border-[#2A2A2A] rounded-xl p-4 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  {/* Record / Stop Button */}
+                  <div className="flex items-center gap-2.5">
+                    {!isRecording ? (
+                      <button
+                        type="button"
+                        onClick={startVoiceRecording}
+                        className="px-4 py-2 rounded-xl bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 text-[#F4D06F] border border-[#D4AF37]/40 hover:border-[#D4AF37] text-xs font-bold flex items-center gap-2 transition-all shadow-sm"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-[#D4AF37]/20 flex items-center justify-center text-[#D4AF37]">
+                          <Mic className="w-3.5 h-3.5" />
+                        </div>
+                        <span>Start Microphone Recording</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={stopVoiceRecording}
+                        className="px-4 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 text-xs font-bold flex items-center gap-2 transition-all animate-pulse"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-red-500/30 flex items-center justify-center text-red-400">
+                          <Square className="w-3.5 h-3.5 fill-current" />
+                        </div>
+                        <span>Stop Voice Recording</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleLoadVoiceDemo}
+                      className="px-3 py-2 rounded-xl bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#A3A3A3] hover:text-[#EAEAEA] border border-[#2A2A2A] text-xs font-medium flex items-center gap-1.5 transition-all"
+                      title="Load test sentence: Yesterday we completed alignment of pump P-101..."
+                    >
+                      <Volume2 className="w-3.5 h-3.5 text-[#D4AF37]" />
+                      <span>Load Voice Demo</span>
+                    </button>
+                  </div>
+
+                  {/* Clear Button */}
+                  {inputText && (
+                    <button
+                      type="button"
+                      onClick={handleClearTranscript}
+                      className="text-[11px] text-[#A3A3A3] hover:text-red-400 flex items-center gap-1 self-end sm:self-auto"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Clear</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Live Status & Audio Feedback Indicator */}
+                <div className="flex items-center justify-between text-xs px-3 py-1.5 rounded-lg bg-[#111111] border border-[#2A2A2A]">
+                  <div className="flex items-center gap-2">
+                    {isRecording ? (
+                      <>
+                        <Radio className="w-3.5 h-3.5 text-red-400 animate-pulse" />
+                        <span className="text-red-400 font-semibold text-[11px]">Listening to field speech in real time...</span>
+                      </>
+                    ) : voiceStatus === 'stopped' ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />
+                        <span className="text-[#10B981] font-semibold text-[11px]">Speech captured. You can review and edit text below.</span>
+                      </>
+                    ) : voiceStatus === 'error' ? (
+                      <>
+                        <AlertCircle className="w-3.5 h-3.5 text-red-400" />
+                        <span className="text-red-400 text-[11px]">{voiceError || 'Voice recognition error'}</span>
+                      </>
+                    ) : voiceStatus === 'unsupported' ? (
+                      <>
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+                        <span className="text-amber-400 text-[11px]">Browser speech engine not detected. Use Load Voice Demo.</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="w-3.5 h-3.5 text-[#A3A3A3]" />
+                        <span className="text-[#A3A3A3] text-[11px]">Click "Start Microphone Recording" and speak naturally.</span>
+                      </>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-[#A3A3A3] font-mono">Web Speech API</span>
+                </div>
+              </div>
+            )}
 
             {/* Metadata Inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -604,7 +857,7 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
                   type="text"
                   value={sourceId}
                   onChange={(e) => setSourceId(e.target.value)}
-                  placeholder="e.g. DPR-2026-09-06-01"
+                  placeholder="e.g. DPR-2026-09-06-01 or VOICE-20260921-01"
                   className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded px-2.5 py-1 text-xs text-white font-mono focus:outline-none focus:border-[#D4AF37]"
                 />
               </div>
@@ -617,6 +870,7 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
                   className="w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded px-2.5 py-1 text-xs text-white focus:outline-none focus:border-[#D4AF37]"
                 >
                   <option value="DPR_TEXT">DPR_TEXT (Daily Progress)</option>
+                  <option value="VOICE">VOICE (Voice Capture)</option>
                   <option value="SITE_DIARY">SITE_DIARY (Site Diary)</option>
                   <option value="SUPERVISOR_LOG">SUPERVISOR_LOG (Supervisor)</option>
                   <option value="INSPECTION_NOTE">INSPECTION_NOTE (QA/QC)</option>
@@ -645,17 +899,32 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
               </div>
             </div>
 
-            {/* Textarea */}
+            {/* Editable Text / Transcript Area */}
             <div className="space-y-1">
               <label className="text-[11px] font-medium text-[#EAEAEA] flex items-center justify-between">
-                <span>Raw Text Content:</span>
-                <span className="text-[10px] text-[#A3A3A3]">Grounded facts only</span>
+                <span className="flex items-center gap-1.5">
+                  {captureMode === 'VOICE' ? (
+                    <>
+                      <Edit3 className="w-3.5 h-3.5 text-[#D4AF37]" />
+                      <span>Editable Voice Transcript (Supervisor Review & Edit):</span>
+                    </>
+                  ) : (
+                    <span>Raw Text Content:</span>
+                  )}
+                </span>
+                <span className="text-[10px] text-[#A3A3A3]">
+                  {captureMode === 'VOICE' ? 'Edit any speech recognition errors before extraction' : 'Grounded facts only'}
+                </span>
               </label>
               <textarea
                 rows={5}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Paste raw unstructured field execution report text here..."
+                placeholder={
+                  captureMode === 'VOICE'
+                    ? "Spoken field update will stream into this box in real time... You can freely click and edit words before extracting."
+                    : "Paste raw unstructured field execution report text here..."
+                }
                 className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg p-3 text-xs text-[#EAEAEA] placeholder-[#A3A3A3] focus:outline-none focus:border-[#D4AF37] font-mono leading-relaxed"
               />
             </div>
@@ -838,6 +1107,7 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
             >
               <option value="ALL">All Source Types</option>
               <option value="DPR_TEXT">DPR_TEXT</option>
+              <option value="VOICE">VOICE (Voice Capture)</option>
               <option value="SITE_DIARY">SITE_DIARY</option>
               <option value="SUPERVISOR_LOG">SUPERVISOR_LOG</option>
               <option value="INSPECTION_NOTE">INSPECTION_NOTE</option>
@@ -894,6 +1164,12 @@ export default function FieldReportsPage({ onNavigate, initialProjectId = 'PRJ-R
                             <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse" title="Currently Active Event" />
                           )}
                           <span>{report.source_id || report.id.slice(0, 8)}</span>
+                          {report.source_type === 'VOICE' && (
+                            <span className="px-1.5 py-0.2 rounded bg-[#D4AF37]/20 text-[#F4D06F] border border-[#D4AF37]/40 text-[9px] font-sans font-bold flex items-center gap-0.5" title="Captured via Voice Recording">
+                              <Mic className="w-2.5 h-2.5" />
+                              <span>VOICE</span>
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-2.5 px-3 text-[#A3A3A3] whitespace-nowrap text-[11px]">

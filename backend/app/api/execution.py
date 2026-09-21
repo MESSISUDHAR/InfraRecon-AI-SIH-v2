@@ -70,7 +70,8 @@ def submit_execution_event(
     source_id = payload.source_id
     if not source_id or not source_id.strip():
         date_tag = (payload.report_date or now_utc).strftime("%Y%m%d")
-        source_id = f"DPR-{date_tag}-{event_id[-4:].upper()}"
+        prefix = "VOICE" if (payload.source_type and "VOICE" in payload.source_type.upper()) else "DPR"
+        source_id = f"{prefix}-{date_tag}-{event_id[-4:].upper()}"
 
     event = ExecutionEvent(
         id=event_id,
@@ -152,7 +153,8 @@ def extract_execution_facts(
     elif payload.save_to_db:
         ensure_project_exists(db, payload.project_id or "PRJ-REF-04")
         event_id = f"evt_{uuid.uuid4().hex[:12]}"
-        source_id = payload.source_id or f"DPR-{now_utc.strftime('%Y%m%d')}-{event_id[-4:].upper()}"
+        prefix = "VOICE" if (payload.source_type and "VOICE" in payload.source_type.upper()) else "DPR"
+        source_id = payload.source_id or f"{prefix}-{now_utc.strftime('%Y%m%d')}-{event_id[-4:].upper()}"
         
         new_event = ExecutionEvent(
             id=event_id,

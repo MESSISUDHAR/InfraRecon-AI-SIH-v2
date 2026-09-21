@@ -5,8 +5,8 @@ from datetime import datetime
 class ExecutionEventCreate(BaseModel):
     project_id: str = Field(..., description="Target Project ID")
     raw_text: str = Field(..., min_length=3, description="Raw unstructured field report or DPR text")
-    source_id: Optional[str] = Field(None, description="Report identifier, e.g. DPR-2026-09-06-01")
-    source_type: Optional[str] = Field("DPR_TEXT", description="DPR_TEXT, FILE_UPLOAD, SITE_DIARY, SUPERVISOR_LOG, CSV_BATCH")
+    source_id: Optional[str] = Field(None, description="Report identifier, e.g. DPR-2026-09-06-01 or VOICE-20260906-01")
+    source_type: Optional[str] = Field("DPR_TEXT", description="DPR_TEXT, VOICE, FILE_UPLOAD, SITE_DIARY, SUPERVISOR_LOG, CSV_BATCH")
     source_reference: Optional[str] = Field(None, description="Original filename or document reference")
     reporter_name: Optional[str] = Field(None, description="Reporting supervisor or engineer name")
     report_date: Optional[datetime] = Field(None, description="Date of the field observation")
